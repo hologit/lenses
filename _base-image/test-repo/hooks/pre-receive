@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# echo "[pre-receive] Hook started at $(date)"
+# echo "[pre-receive] Parameters:"
+
+# # Read stdin line by line
+# while read oldrev newrev refname; do
+#     echo "  Old revision: $oldrev"
+#     echo "  New revision: $newrev"
+#     echo "  Ref name: $refname"
+
+#     echo "[pre-receive] tree content: $(git ls-tree --name-only $newrev | tr '\n' ' ')"
+# done
+
+# echo "[pre-receive] Environment:"
+# env | sort | while read -r var; do
+#     echo "  $var"
+# done
+
+echo "[pre-receive] Hook completed"
+exit 0

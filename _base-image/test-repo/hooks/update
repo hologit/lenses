@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# echo "[update] Hook started at $(date)"
+# echo "[update] Parameters:"
+# echo "  Reference name: $1"
+# echo "  Old revision: $2"
+# echo "  New revision: $3"
+
+# # echo "[update] Environment:"
+# # env | sort | while read -r var; do
+# #     echo "  $var"
+# # done
+# echo "[update] tree content: $(git ls-tree --name-only $3 | tr '\n' ' ')"
+
+# echo "[update] Git directory: $(pwd)"
+echo "[update] Hook completed"
+exit 0

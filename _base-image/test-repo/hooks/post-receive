@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# echo "[post-receive] Hook started at $(date)"
+# echo "[post-receive] Parameters:"
+
+# # Read stdin line by line
+# while read oldrev newrev refname; do
+#     echo "  Old revision: $oldrev"
+#     echo "  New revision: $newrev"
+#     echo "  Ref name: $refname"
+
+#     # Log the type of ref being updated
+#     case "$refname" in
+#         refs/heads/*)
+#             branch=${refname#refs/heads/}
+#             echo "  Branch '$branch' updated"
+#             ;;
+#         refs/tags/*)
+#             tag=${refname#refs/tags/}
+#             echo "  Tag '$tag' updated"
+#             ;;
+#         *)
+#             echo "  Other ref '$refname' updated"
+#             ;;
+#     esac
+
+#     echo "[post-receive] tree content: $(git ls-tree --name-only $newrev | tr '\n' ' ')"
+# done
+
+# echo "[post-receive] Environment:"
+# env | sort | while read -r var; do
+#     echo "  $var"
+# done
+
+# echo "[post-receive] Git directory: $(pwd)"
+echo "[post-receive] Hook completed"
+exit 0
