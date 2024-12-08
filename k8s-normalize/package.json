@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "hologit": "^0.31.0",
+    "js-yaml": "^3.14.0"
+  }
+}
