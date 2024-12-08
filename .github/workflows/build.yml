@@ -1,0 +1,63 @@
+name: Build Images
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  discover-lenses:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set-matrix
+        run: |
+          DIRS=$(find . -name Dockerfile -exec dirname {} \; | sed 's|^./||' | grep -v '^_base-image$' | jq -R -s -c 'split("\n")[:-1]')
+          echo "matrix=${DIRS}" >> $GITHUB_OUTPUT
+
+  build-base:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build base image
+        uses: docker/build-push-action@v5
+        with:
+          context: _base-image
+          push: true
+          tags: ghcr.io/hologit/lenses/base:node-20
+          cache-from: type=registry,ref=ghcr.io/hologit/lenses/base:node-20
+          cache-to: type=inline
+
+  build-lens:
+    needs: [discover-lenses, build-base]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: ${{ fromJson(needs.discover-lenses.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build ${{ matrix.image }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.image }}
+          push: true
+          tags: ghcr.io/hologit/lenses/${{ matrix.image }}:latest
+          cache-from: type=registry,ref=ghcr.io/hologit/lenses/${{ matrix.image }}:latest
+          cache-to: type=inline
