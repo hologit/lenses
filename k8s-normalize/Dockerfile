@@ -1,4 +1,4 @@
-FROM lens-container:node-20
+FROM ghcr.io/hologit/lenses/base:node-20
 
 # Copy package files
 COPY package*.json ./
