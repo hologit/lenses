@@ -21,9 +21,11 @@ WORKDIR /lens-server
 
 # Copy package files
 COPY package*.json ./
+COPY git-hooks/package*.json /repo/hooks/
 
 # Install dependencies
 RUN npm ci
+RUN cd /repo/hooks && npm ci
 
 # Copy application files
 COPY lib ./lib

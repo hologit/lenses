@@ -1,17 +1,110 @@
-#!/bin/sh
+#!/usr/bin/env node
 
-# Read stdin line by line
-while read oldrev newrev refname; do
-    >&2 echo "::holo:: Executing lens ${refname}: ${newrev}"
+const { createInterface } = require('readline');
+const { promises: fs } = require('fs');
+const { tmpdir } = require('os');
+const { join } = require('path');
+const { spawn } = require('child_process');
+const git = require('git-client');
+const TOML = require('@iarna/toml');
+const squish = require('object-squish');
 
-    lens_command="$HOLOLENS_ENTRYPOINT ${newrev}"
-    output_cache=$(mktemp)
+// Create readline interface for stdin
+const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
+});
 
-    tree_hash=$($lens_command 2> >(tee $output_cache >&2))
-    commit_hash=$(git commit-tree "${tree_hash}" -p "${newrev}" -m "${lens_command}" -F $output_cache)
+// Execute lens command and capture output
+async function execLensCommand(command, args, options) {
+    return new Promise((resolve, reject) => {
+        process.stderr.write(`executing: ${command} ${args.join(' ')}\n`);
+        const proc = spawn(command, args, { stdio: 'pipe', ...options });
+        let stdout = '';
+        let stderr = '';
 
-    echo "${refname}:${commit_hash}"
-    git update-ref "${refname}" "${commit_hash}"
-done
+        proc.stdout.on('data', data => {
+            process.stderr.write(`\x1b[90m${data.toString().trimEnd()}\x1b[0m\n`);
+            stdout += data;
+        });
+        proc.stderr.on('data', data => {
+            process.stderr.write(`\x1b[90m${data.toString().trimEnd()}\x1b[0m\n`);
+            stderr += data;
+        });
 
-exit 0
+        proc.on('close', code => {
+            if (code === 0) {
+                resolve({ stdout: stdout.trim(), stderr: stderr.trim() });
+            } else {
+                reject(new Error(`Command failed with code ${code}`));
+            }
+        });
+    });
+}
+
+// Process each line from stdin
+async function processLine(line) {
+    const [oldrev, newrev, refname] = line.split(' ');
+
+    console.error(`::holo:: Executing lens ${refname}: ${newrev}`);
+
+    const lensCommand = process.env.HOLOLENS_ENTRYPOINT;
+    const outputPath = join(tmpdir(), `hololens-${Date.now()}`);
+
+    try {
+        // Read lens configuration
+        const specToml = await git.show({ 'no-patch': true, format: '%B' }, newrev);
+        const {
+            holospec: {
+                lens: spec
+            }
+        } = TOML.parse(specToml);
+
+        // Build environments
+        const lensEnv = Object.assign(
+            squish({ hololens: spec }, {
+                seperator: '_',
+                modifyKey: key => key.toUpperCase().replace(/-/g, '_')
+            }),
+            process.env
+        );
+
+        // Execute lens command and capture output
+        const { stdout: treeHash, stderr: outputLog } = await execLensCommand(lensCommand, [newrev], { env: lensEnv });
+
+        // Write output log to temp file
+        await fs.writeFile(outputPath, outputLog);
+
+        // Create commit with the tree
+        const commitHash = await git.commitTree({
+            p: newrev,
+            m: `${lensCommand} ${newrev}`,
+            F: outputPath
+        }, treeHash);
+
+        // Output result
+        console.log(`${refname}:${commitHash}`);
+
+        // Update ref
+        await git('update-ref', refname, commitHash.trim());
+
+        // Cleanup
+        await fs.unlink(outputPath);
+    } catch (err) {
+        console.error('Error processing job:', err);
+        process.exit(1);
+    }
+}
+
+// Process lines sequentially
+rl.on('line', line => {
+    processLine(line).catch(err => {
+        console.error('Fatal error:', err);
+        process.exit(1);
+    });
+});
+
+rl.on('close', () => {
+    process.exit(0);
+});
