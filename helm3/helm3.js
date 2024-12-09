@@ -126,9 +126,6 @@ async function patchNamespaces(yamlPath) {
 }
 
 function buildManifest() {
-    // Run from Git work tree
-    process.chdir(GIT_WORK_TREE);
-
     // Install helm dependencies
     console.error('executing: helm dependency update');
     execSync(`cd "${HOLOLENS_HELM_CHART_PATH}" && helm dependency update`, { stdio: 'inherit' });
@@ -197,6 +194,9 @@ async function main() {
         if (!inputTree) {
             throw new Error('Input tree argument required');
         }
+
+        // Run from Git work tree
+        process.chdir(GIT_WORK_TREE);
 
         // Export git tree
         execSync(`git holo lens export-tree "${inputTree}"`, { stdio: 'inherit' });
