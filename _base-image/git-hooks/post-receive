@@ -92,6 +92,9 @@ async function processLine(line) {
 }
 
 async function main() {
+    // Set GIT_DIR to absolute path so it is not affected by chdir
+    process.env.GIT_DIR = await fs.realpath(process.env.GIT_DIR);
+
     for await (const line of createInterface({ input: process.stdin })) {
         await processLine(line);
     }
