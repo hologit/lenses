@@ -3,6 +3,9 @@ FROM node:20-alpine
 # Install git
 RUN apk add --no-cache git
 
+# Install Hologit
+RUN npm install -g hologit
+
 # Create repository directory
 RUN git init --bare /repo
 
