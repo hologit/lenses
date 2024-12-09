@@ -9,12 +9,6 @@ const git = require('git-client');
 const TOML = require('@iarna/toml');
 const squish = require('object-squish');
 
-// Create readline interface for stdin
-const rl = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: false
-});
 
 // Execute lens command and capture output
 async function execLensCommand(command, args, options) {
@@ -62,13 +56,13 @@ async function processLine(line) {
         } = TOML.parse(specToml);
 
         // Build environments
-        const lensEnv = Object.assign(
-            squish({ hololens: spec }, {
+        const lensEnv = {
+            ...squish({ hololens: spec }, {
                 seperator: '_',
                 modifyKey: key => key.toUpperCase().replace(/-/g, '_')
             }),
-            process.env
-        );
+            ...process.env
+        };
 
         // Execute lens command and capture output
         const { stdout: treeHash, stderr: outputLog } = await execLensCommand(lensCommand, [newrev], { env: lensEnv });
@@ -92,19 +86,18 @@ async function processLine(line) {
         // Cleanup
         await fs.unlink(outputPath);
     } catch (err) {
-        console.error('Error processing job:', err);
+        console.error(`Error processing job: ${err}`);
         process.exit(1);
     }
 }
 
-// Process lines sequentially
-rl.on('line', line => {
-    processLine(line).catch(err => {
-        console.error('Fatal error:', err);
-        process.exit(1);
-    });
-});
+async function main() {
+    for await (const line of createInterface({ input: process.stdin })) {
+        await processLine(line);
+    }
+}
 
-rl.on('close', () => {
-    process.exit(0);
+main().catch(error => {
+    console.error(`Fatal error: ${error}`);
+        process.exit(1);
 });
