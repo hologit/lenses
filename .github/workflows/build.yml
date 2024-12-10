@@ -65,12 +65,15 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/hologit/lenses/base:node-20
           cache-to: type=inline
 
-  publish-lib-lens:
+  publish-npm:
     needs: [discover]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [lens-lib, lens-lib-k8s]
     defaults:
       run:
-        working-directory: _lens-lib
+        working-directory: _${{ matrix.package }}
     steps:
       - uses: actions/checkout@v4
 
@@ -80,30 +83,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Setting package.json version
-        run: npm version --no-git-tag-version "${{ needs.discover.outputs.version-patch }}"
-
-      - run: npm install
-
-      - run: npm publish
         if: github.event_name == 'release'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  publish-lib-lens-k8s:
-    needs: [discover]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: _lens-lib-k8s
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '20.x'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setting package.json version
         run: npm version --no-git-tag-version "${{ needs.discover.outputs.version-patch }}"
 
       - run: npm install
