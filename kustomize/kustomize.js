@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
 const { LensRunner } = require('@hologit/lens-lib');
 const { K8sManifestHandler } = require('@hologit/lens-lib-k8s');
 
@@ -14,14 +15,14 @@ runner.run(async () => {
     const namespace = runner.getEnv('HOLOLENS_KUSTOMIZE_NAMESPACE');
 
     // Create output directory
-    await runner.createOutputDir(outputRoot);
+    fs.mkdirSync(outputRoot, { recursive: true });
 
     // Execute kustomize build
     const kustomizeOutput = await runner.captureCommand('kustomize', ['build', kustomizeDir]);
 
     // Write manifest with optional namespace doc
     const namespaceDoc = k8s.generateNamespaceManifest(namespace);
-    await runner.writeFile(outputPath, namespaceDoc + kustomizeOutput);
+    fs.writeFileSync(outputPath, namespaceDoc + kustomizeOutput);
 
     // Patch namespaces if needed
     if (runner.getEnv('HOLOLENS_KUSTOMIZE_NAMESPACE_FILL') === 'true' ||

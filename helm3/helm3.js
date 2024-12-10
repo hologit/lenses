@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
 const { LensRunner } = require('@hologit/lens-lib');
 const { K8sManifestHandler } = require('@hologit/lens-lib-k8s');
 
@@ -22,7 +23,7 @@ runner.run(async () => {
     await runner.execCommand('helm', ['dependency', 'update', chartPath]);
 
     // Create output directory
-    await runner.createOutputDir(outputRoot);
+    fs.mkdirSync(outputRoot, { recursive: true });
 
     // Prepare helm template args
     const helmArgs = ['template'];
@@ -63,7 +64,7 @@ runner.run(async () => {
 
     // Write manifest with optional namespace doc
     const namespaceDoc = k8s.generateNamespaceManifest(namespace);
-    await runner.writeFile(outputPath, namespaceDoc + helmOutput);
+    fs.writeFileSync(outputPath, namespaceDoc + helmOutput);
 
     // Patch namespaces if needed
     if (runner.getEnv('HOLOLENS_HELM_NAMESPACE_FILL') === 'true' ||

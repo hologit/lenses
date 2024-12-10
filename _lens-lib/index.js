@@ -129,18 +129,6 @@ class LensRunner {
     getEnv(varName, defaultValue) {
         return process.env[varName] || defaultValue;
     }
-
-    // Helper to create output directory
-    async createOutputDir(dir) {
-        const fs = require('fs');
-        fs.mkdirSync(dir, { recursive: true });
-    }
-
-    // Helper to write file
-    async writeFile(path, content) {
-        const fs = require('fs');
-        fs.writeFileSync(path, content);
-    }
 }
 
 module.exports = {

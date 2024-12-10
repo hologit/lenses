@@ -1,4 +1,5 @@
-const { yaml } = require('js-yaml');
+const fs = require('fs');
+const { yaml } = require('../lens-lib');
 
 // List of kinds that don't support namespaces
 const namespacelessKinds = [
@@ -84,7 +85,7 @@ metadata:
         }
 
         // load objects
-        const objects = yaml.loadAll(await this.runner.readFile(yamlPath));
+        const objects = yaml.safeLoadAll(fs.readFileSync(yamlPath, 'utf8'));
 
         // patch namespaces
         let patchedCount = 0;
@@ -117,11 +118,11 @@ metadata:
         }
 
         // save changes
-        await this.runner.writeFile(
+        fs.writeFileSync(
             yamlPath,
             objects
                 .filter(obj => obj !== null)
-                .map(object => yaml.dump(object))
+                .map(object => yaml.safeDump(object))
                 .join('\n---\n\n')
         );
         console.error(`patched ${patchedCount} namespaces in ${yamlPath}`);
