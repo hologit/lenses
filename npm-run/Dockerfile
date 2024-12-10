@@ -11,4 +11,3 @@ COPY _lens-lib /_lens-lib
 
 # Copy lens script
 COPY npm-run/index.js ./
-ENV HOLOLENS_ENTRYPOINT="/lens/index.js"

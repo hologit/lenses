@@ -12,4 +12,3 @@ COPY _lens-lib-k8s /_lens-lib-k8s
 
 # Copy lens script
 COPY k8s-normalize/index.js ./
-ENV HOLOLENS_ENTRYPOINT="/lens/index.js"

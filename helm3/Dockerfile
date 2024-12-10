@@ -15,4 +15,3 @@ COPY _lens-lib-k8s /_lens-lib-k8s
 
 # Copy lens script
 COPY helm3/index.js ./
-ENV HOLOLENS_ENTRYPOINT="/lens/index.js"
