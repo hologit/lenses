@@ -2,11 +2,9 @@
 
 const fs = require('fs');
 const { LensRunner } = require('@hologit/lens-lib');
-const { K8sManifestHandler } = require('@hologit/lens-lib-k8s');
+const { generateNamespaceManifest, patchNamespaces } = require('@hologit/lens-lib-k8s');
 
 LensRunner.run({ exportTree: true }, async (runner) => {
-    const k8s = new K8sManifestHandler(runner);
-
     const {
         HOLOLENS_HELM_OUTPUT_ROOT = 'output',
         HOLOLENS_HELM_OUTPUT_FILENAME = 'manifest.yaml',
@@ -67,13 +65,13 @@ LensRunner.run({ exportTree: true }, async (runner) => {
     const helmOutput = await runner.captureCommand('helm', helmArgs);
 
     // Write manifest with optional namespace doc
-    const namespaceDoc = k8s.generateNamespaceManifest(HOLOLENS_HELM_NAMESPACE);
+    const namespaceDoc = generateNamespaceManifest(HOLOLENS_HELM_NAMESPACE);
     fs.writeFileSync(outputPath, namespaceDoc + helmOutput);
 
     // Patch namespaces if needed
     if (HOLOLENS_HELM_NAMESPACE_FILL === 'true' ||
         HOLOLENS_HELM_NAMESPACE_OVERRIDE === 'true') {
-        await k8s.patchNamespaces(outputPath, {
+        await patchNamespaces(outputPath, {
             namespace: HOLOLENS_HELM_NAMESPACE,
             fill: HOLOLENS_HELM_NAMESPACE_FILL === 'true',
             override: HOLOLENS_HELM_NAMESPACE_OVERRIDE === 'true'

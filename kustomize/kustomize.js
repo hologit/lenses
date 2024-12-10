@@ -2,11 +2,9 @@
 
 const fs = require('fs');
 const { LensRunner } = require('@hologit/lens-lib');
-const { K8sManifestHandler } = require('@hologit/lens-lib-k8s');
+const { generateNamespaceManifest, patchNamespaces } = require('@hologit/lens-lib-k8s');
 
 LensRunner.run({ exportTree: true }, async (runner) => {
-    const k8s = new K8sManifestHandler(runner);
-
     const {
         HOLOLENS_KUSTOMIZE_OUTPUT_ROOT = 'output',
         HOLOLENS_KUSTOMIZE_OUTPUT_FILENAME = 'manifest.yaml',
@@ -25,13 +23,13 @@ LensRunner.run({ exportTree: true }, async (runner) => {
     const kustomizeOutput = await runner.captureCommand('kustomize', ['build', HOLOLENS_KUSTOMIZE_DIRECTORY]);
 
     // Write manifest with optional namespace doc
-    const namespaceDoc = k8s.generateNamespaceManifest(HOLOLENS_KUSTOMIZE_NAMESPACE);
+    const namespaceDoc = generateNamespaceManifest(HOLOLENS_KUSTOMIZE_NAMESPACE);
     fs.writeFileSync(outputPath, namespaceDoc + kustomizeOutput);
 
     // Patch namespaces if needed
     if (HOLOLENS_KUSTOMIZE_NAMESPACE_FILL === 'true' ||
         HOLOLENS_KUSTOMIZE_NAMESPACE_OVERRIDE === 'true') {
-        await k8s.patchNamespaces(outputPath, {
+        await patchNamespaces(outputPath, {
             namespace: HOLOLENS_KUSTOMIZE_NAMESPACE,
             fill: HOLOLENS_KUSTOMIZE_NAMESPACE_FILL === 'true',
             override: HOLOLENS_KUSTOMIZE_NAMESPACE_OVERRIDE === 'true'
