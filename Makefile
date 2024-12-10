@@ -4,19 +4,19 @@
 all: _base-image k8s-normalize helm3 kustomize npm-install npm-run
 
 _base-image:
-	docker build $@ -t ghcr.io/hologit/lenses/base:node-20
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/base:node-20
 
 k8s-normalize: _base-image
-	docker build . -t ghcr.io/hologit/lenses/k8s-normalize:latest -f $@/Dockerfile
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/k8s-normalize:latest
 
 helm3: _base-image
-	docker build . -t ghcr.io/hologit/lenses/helm3:latest -f $@/Dockerfile
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/helm3:latest
 
 kustomize: _base-image
-	docker build . -t ghcr.io/hologit/lenses/kustomize:latest -f $@/Dockerfile
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/kustomize:latest
 
 npm-install: _base-image
-	docker build . -t ghcr.io/hologit/lenses/npm-install:latest -f $@/Dockerfile
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/npm-install:latest
 
 npm-run: _base-image
-	docker build . -t ghcr.io/hologit/lenses/npm-run:latest -f $@/Dockerfile
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/npm-run:latest
