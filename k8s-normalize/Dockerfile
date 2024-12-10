@@ -8,4 +8,4 @@ RUN npm ci
 
 # Copy lens script
 COPY k8s-normalize.js ./
-ENV HOLOLENS_ENTRYPOINT="node /lens/k8s-normalize.js"
+ENV HOLOLENS_ENTRYPOINT="/lens/k8s-normalize.js"

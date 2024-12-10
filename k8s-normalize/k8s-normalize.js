@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const { Repo } = require('hologit');
 const yaml = require('js-yaml');
 
