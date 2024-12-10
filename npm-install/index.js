@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { LensRunner } = require('@hologit/lens-lib');
+const { LensRunner } = require('../_lens-lib');
 
 LensRunner.run({ exportTree: true }, async (runner) => {
     const {

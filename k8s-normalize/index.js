@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const { LensRunner } = require('@hologit/lens-lib');
-const { yaml } = require('@hologit/lens-lib-k8s');
+const { LensRunner } = require('../_lens-lib');
+const { yaml } = require('../_lens-lib-k8s');
 const { Repo } = require('hologit');
 
 LensRunner.run({}, async (runner, inputTree) => {

@@ -9,6 +9,5 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@hologit/lens-lib": "^0.2.0"
   }
 }

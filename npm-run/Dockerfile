@@ -1,11 +1,14 @@
 FROM ghcr.io/hologit/lenses/base:node-20
 
 # Copy package files
-COPY package*.json ./
+COPY npm-run/package*.json ./
 
 # Install dependencies
 RUN npm install
 
+# Copy lens lib
+COPY _lens-lib /_lens-lib
+
 # Copy lens script
-COPY npm-run.js ./
-ENV HOLOLENS_ENTRYPOINT="/lens/npm-run.js"
+COPY npm-run/index.js ./
+ENV HOLOLENS_ENTRYPOINT="/lens/index.js"

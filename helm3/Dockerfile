@@ -4,11 +4,15 @@ FROM ghcr.io/hologit/lenses/base:node-20
 RUN apk add --no-cache helm
 
 # Copy package files
-COPY package*.json ./
+COPY helm3/package*.json ./
 
 # Install dependencies
 RUN npm install
 
+# Copy lens libs
+COPY _lens-lib /lens/_lens-lib
+COPY _lens-lib-k8s /lens/_lens-lib-k8s
+
 # Copy lens script
-COPY helm3.js ./
-ENV HOLOLENS_ENTRYPOINT="/lens/helm3.js"
+COPY helm3/index.js ./
+ENV HOLOLENS_ENTRYPOINT="/lens/index.js"
