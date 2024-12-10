@@ -113,7 +113,8 @@ jobs:
       - name: Build ${{ matrix.image }}
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.image }}
+          context: .
+          file: ${{ matrix.image }}/Dockerfile
           push: ${{ github.event_name == 'release' }}
           tags: |
             ${{ github.event_name == 'release' && format('ghcr.io/hologit/lenses/{0}:latest,ghcr.io/hologit/lenses/{0}:{1},ghcr.io/hologit/lenses/{0}:{2},ghcr.io/hologit/lenses/{0}:{3}', matrix.image, needs.discover.outputs.version-major, needs.discover.outputs.version-minor, needs.discover.outputs.version-patch) }}

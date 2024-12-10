@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const { LensRunner } = require('@hologit/lens-lib');
-const { generateNamespaceManifest, patchNamespaces } = require('@hologit/lens-lib-k8s');
+const { LensRunner } = require('../_lens-lib');
+const { generateNamespaceManifest, patchNamespaces } = require('../_lens-lib-k8s');
 
 LensRunner.run({ exportTree: true }, async (runner) => {
     const {
