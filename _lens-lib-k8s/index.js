@@ -67,13 +67,12 @@ metadata:
     }
 
     // Patch namespaces in a manifest file
-    async patchNamespaces(yamlPath, envPrefix = 'HOLOLENS') {
+    async patchNamespaces(yamlPath, {
+        namespace,
+        fill = false,
+        override = false
+    }) {
         console.error('Patching namespaces...');
-
-        // read options
-        const fill = this.runner.getEnv(`${envPrefix}_NAMESPACE_FILL`) === 'true';
-        const override = this.runner.getEnv(`${envPrefix}_NAMESPACE_OVERRIDE`) === 'true';
-        const defaultNamespace = this.runner.getEnv(`${envPrefix}_NAMESPACE`);
 
         if (!yamlPath) {
             throw new Error('yaml-path required');
@@ -99,7 +98,7 @@ metadata:
                 throw new Error('encountered object with no metadata');
             }
 
-            const { kind, metadata: { name, namespace } } = object;
+            const { kind, metadata: { name, namespace: currentNamespace } } = object;
 
             if (!name) {
                 throw new Error('encountered object with no name');
@@ -110,9 +109,9 @@ metadata:
                 continue;
             }
 
-            if (override || (fill && !namespace)) {
-                object.metadata.namespace = defaultNamespace;
-                console.error(`namespacing ${defaultNamespace}/${kind}/${name}`);
+            if (override || (fill && !currentNamespace)) {
+                object.metadata.namespace = namespace;
+                console.error(`namespacing ${namespace}/${kind}/${name}`);
                 patchedCount++;
             }
         }

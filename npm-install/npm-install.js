@@ -5,18 +5,22 @@ const { LensRunner } = require('@hologit/lens-lib');
 const runner = new LensRunner();
 
 runner.run(async () => {
+    const {
+        HOLOLENS_NPM_INSTALL_COMMAND = 'npm ci',
+        HOLOLENS_NPM_INSTALL_ENV = 'production',
+    } = process.env;
+
     // Set up environment
     runner.setupEnv({
         CI: 'true',
-        NODE_ENV: runner.getEnv('HOLOLENS_NPM_INSTALL_ENV', 'production')
+        NODE_ENV: HOLOLENS_NPM_INSTALL_ENV
     });
 
     // Execute npm install
-    const installCommand = runner.getEnv('HOLOLENS_NPM_INSTALL_COMMAND', 'npm ci');
-    console.error(`\nRunning: ${installCommand}`);
+    console.error(`\nRunning: ${HOLOLENS_NPM_INSTALL_COMMAND}`);
     await runner.execCommand(
-        installCommand.split(' ')[0],
-        installCommand.split(' ').slice(1)
+        HOLOLENS_NPM_INSTALL_COMMAND.split(' ')[0],
+        HOLOLENS_NPM_INSTALL_COMMAND.split(' ').slice(1)
     );
 
     // Add node_modules to git index

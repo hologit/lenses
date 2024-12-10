@@ -5,34 +5,38 @@ const { LensRunner } = require('@hologit/lens-lib');
 const runner = new LensRunner();
 
 runner.run(async () => {
+    const {
+        HOLOLENS_NPM_RUN_INSTALL = 'npm ci',
+        HOLOLENS_NPM_RUN_ENV = 'production',
+        HOLOLENS_NPM_RUN_OUTPUT_DIR,
+    } = process.env;
+
     // Validate required environment variables
     runner.requireEnv('HOLOLENS_NPM_RUN_COMMAND');
+    const { HOLOLENS_NPM_RUN_COMMAND } = process.env;
 
     // Set up environment
     runner.setupEnv({
         CI: 'true',
-        NODE_ENV: runner.getEnv('HOLOLENS_NPM_RUN_ENV', 'production')
+        NODE_ENV: HOLOLENS_NPM_RUN_ENV
     });
 
     // Execute npm install
-    const installCommand = runner.getEnv('HOLOLENS_NPM_RUN_INSTALL', 'npm ci');
-    console.error(`\nRunning: ${installCommand}`);
+    console.error(`\nRunning: ${HOLOLENS_NPM_RUN_INSTALL}`);
     await runner.execCommand(
-        installCommand.split(' ')[0],
-        installCommand.split(' ').slice(1)
+        HOLOLENS_NPM_RUN_INSTALL.split(' ')[0],
+        HOLOLENS_NPM_RUN_INSTALL.split(' ').slice(1)
     );
 
     // Execute configured command
-    const runCommand = runner.getEnv('HOLOLENS_NPM_RUN_COMMAND');
-    console.error(`\nRunning: npm run ${runCommand}`);
-    const commandOutput = await runner.captureCommand('npm', ['run', '--silent', runCommand]);
-    console.error(`\n${runCommand} completed successfully`);
+    console.error(`\nRunning: npm run ${HOLOLENS_NPM_RUN_COMMAND}`);
+    const commandOutput = await runner.captureCommand('npm', ['run', '--silent', HOLOLENS_NPM_RUN_COMMAND]);
+    console.error(`\n${HOLOLENS_NPM_RUN_COMMAND} completed successfully`);
 
     // Handle output directory if specified
-    const outputDir = runner.getEnv('HOLOLENS_NPM_RUN_OUTPUT_DIR');
-    if (outputDir) {
-        await runner.addToIndex(outputDir);
-        return await runner.writeTree('--prefix=' + outputDir);
+    if (HOLOLENS_NPM_RUN_OUTPUT_DIR) {
+        await runner.addToIndex(HOLOLENS_NPM_RUN_OUTPUT_DIR);
+        return await runner.writeTree('--prefix=' + HOLOLENS_NPM_RUN_OUTPUT_DIR);
     }
 
     // Otherwise return command output

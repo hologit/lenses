@@ -124,11 +124,6 @@ class LensRunner {
             }
         });
     }
-
-    // Helper to get environment variables with defaults
-    getEnv(varName, defaultValue) {
-        return process.env[varName] || defaultValue;
-    }
 }
 
 module.exports = {
