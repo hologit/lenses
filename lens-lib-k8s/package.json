@@ -1,0 +1,14 @@
+{
+  "name": "@hologit/lens-lib-k8s",
+  "version": "1.0.0",
+  "description": "Shared kubernetes library for hologit lenses",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@hologit/lens-lib": "file:../lens-lib"
+  }
+}
