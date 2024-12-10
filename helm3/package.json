@@ -1,5 +1,15 @@
 {
+  "name": "@hologit/lens-helm3",
+  "version": "1.0.0",
+  "description": "hologit lens for helm3 charts",
+  "main": "helm3.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "js-yaml": "^3.14.0"
+    "@hologit/lens-lib": "^0.1.2",
+    "@hologit/lens-lib-k8s": "^0.1.2"
   }
 }

@@ -1,49 +1,27 @@
 #!/usr/bin/env node
 
-const { Repo } = require('hologit');
-const yaml = require('js-yaml');
+const { LensRunner } = require('@hologit/lens-lib');
+const { K8sManifestHandler, yaml } = require('@hologit/lens-lib-k8s');
 
+const runner = new LensRunner();
 
-outputResult(lensTree(process.argv[2]));
+runner.run(async () => {
+    // Create output directory for normalized manifests
+    const outputRoot = 'normalized';
+    await runner.createOutputDir(outputRoot);
 
-async function lensTree(treeHash) {
+    // Read and process all yaml files
+    const yamlFiles = await runner.captureCommand('find', ['.', '-type', 'f', '-name', '*.yaml', '-o', '-name', '*.yml']);
+    const files = yamlFiles.split('\n').filter(Boolean);
 
-    // load env/input
-    const repo = await Repo.getFromEnvironment();
-    const tree = await repo.createTreeFromRef(treeHash);
-
-
-    // init output
-    const outputTree = repo.createTree();
-
-
-    // check env/input
-    if (!tree) {
-        return outputTree;
-    }
-
-    if (!tree.isTree) {
-        throw new Error('input must be a tree');
-    }
-
-
-    // configure js-yaml dump options
-    const yamlDumpOptions = {
-        sortKeys: true // could be a function to sort apiVersion, kind, metadata, spec, ...
-    };
-
-
-    // iterate input
-    const blobs = await tree.getBlobMap();
-    for (const blobPath in blobs) {
-        const blob = blobs[blobPath];
-
+    for (const file of files) {
+        const content = await runner.readFile(file);
         let objects;
 
         try {
-            objects = yaml.safeLoadAll(await blob.read());
+            objects = yaml.loadAll(content);
         } catch (err) {
-            console.error(`Failed to parse: ${blobPath}\n\n${err}`);
+            console.error(`Failed to parse: ${file}\n\n${err}`);
             process.exit(1);
         }
 
@@ -57,7 +35,7 @@ async function lensTree(treeHash) {
             const { kind, metadata } = object;
 
             if (!kind) {
-                console.error(`Object ${objectIndex} in ${blobPath} is missing property: kind`);
+                console.error(`Object ${objectIndex} in ${file} is missing property: kind`);
                 process.exit(1);
             }
 
@@ -67,38 +45,28 @@ async function lensTree(treeHash) {
             }
 
             if (!metadata) {
-                console.error(`Object ${objectIndex} in ${blobPath} is missing property: metadata`);
+                console.error(`Object ${objectIndex} in ${file} is missing property: metadata`);
                 process.exit(1);
             }
 
             const { name, namespace } = metadata;
 
             if (!name) {
-                console.error(`Object ${objectIndex} in ${blobPath} is missing property: metadata.name`);
+                console.error(`Object ${objectIndex} in ${file} is missing property: metadata.name`);
                 process.exit(1);
             }
 
-            const objectPath = `${namespace || '_'}/${kind}/${name}.yaml`;
-            await outputTree.writeChild(objectPath, yaml.safeDump(object, yamlDumpOptions))
-            console.error(`${blobPath}→${objectPath}`);
+            // Write normalized manifest
+            const objectPath = `${outputRoot}/${namespace || '_'}/${kind}/${name}.yaml`;
+            await runner.writeFile(objectPath, yaml.dump(object, { sortKeys: true }));
+            console.error(`${file}→${objectPath}`);
             objectIndex++;
         }
     }
 
+    // Add output to git index
+    await runner.addToIndex(outputRoot);
 
-    return outputTree;
-}
-
-
-async function outputResult(result) {
-    result = await result;
-
-    if (result.isTree) {
-        console.log(await result.write());
-        process.exit(0);
-        return;
-    }
-
-    console.error('no result');
-    process.exit(1);
-}
+    // Output tree hash
+    return await runner.writeTree(outputRoot);
+});
