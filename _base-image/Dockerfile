@@ -20,17 +20,24 @@ RUN git config --global user.email "hololens@container" \
 WORKDIR /lens-server
 
 # Copy package files
-COPY package*.json ./
-COPY git-hooks/package*.json /repo/hooks/
+COPY _base-image/package*.json ./
+COPY _base-image/git-hooks/package*.json /repo/hooks/
 
 # Install dependencies
 RUN npm ci
 RUN cd /repo/hooks && npm ci
 
 # Copy application files
-COPY lib ./lib
-COPY server.js ./
-COPY git-hooks/ /repo/hooks/
+COPY _base-image/lib ./lib
+COPY _base-image/server.js ./
+COPY _base-image/git-hooks/ /repo/hooks/
+
+# Copy lens libs and install dependencies
+COPY _lens-lib-k8s /_lens-lib-k8s
+RUN cd /_lens-lib-k8s && npm install
+
+COPY _lens-lib /_lens-lib
+RUN cd /_lens-lib && npm install
 
 # Expose default port
 EXPOSE 9000
@@ -46,4 +53,4 @@ CMD ["node", "/lens-server/server.js"]
 # Set up lens template
 ENV HOLOLENS_ENTRYPOINT=/lens/index.js
 WORKDIR /lens
-COPY index.js .
+COPY _base-image/index.js .

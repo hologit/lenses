@@ -59,7 +59,8 @@ jobs:
       - name: Build base image
         uses: docker/build-push-action@v5
         with:
-          context: _base-image
+          context: .
+          file: _base-image/Dockerfile
           push: ${{ github.event_name == 'release' }}
           tags: ghcr.io/hologit/lenses/base:node-20
           cache-from: type=registry,ref=ghcr.io/hologit/lenses/base:node-20

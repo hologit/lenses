@@ -6,8 +6,5 @@ COPY npm-install/package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy lens lib
-COPY _lens-lib /_lens-lib
-
 # Copy lens script
 COPY npm-install/index.js ./
