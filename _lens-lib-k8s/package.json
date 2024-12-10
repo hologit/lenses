@@ -1,6 +1,6 @@
 {
   "name": "@hologit/lens-lib-k8s",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Shared kubernetes library for hologit lenses",
   "main": "index.js",
   "scripts": {
