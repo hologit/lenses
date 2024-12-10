@@ -48,13 +48,6 @@ class LensRunner {
         return this.execCommand(cmd, args, { ...options, $captureOutput: true });
     }
 
-    // Log environment variables starting with HOLO
-    logHoloEnv() {
-        Object.entries(process.env)
-            .filter(([key]) => key.startsWith('HOLO'))
-            .forEach(([key, value]) => console.error(`${key}=${value}`));
-    }
-
     // Export git tree
     async exportTree(treeHash) {
         console.error(`Exporting tree to scratch directory: ${treeHash}`);
@@ -107,8 +100,15 @@ class LensRunner {
         }
     }
 
-    // Helper to set up common environment variables
-    setupEnv(envVars) {
+    // Log environment variables starting with HOLO
+    logHoloEnv() {
+        Object.entries(process.env)
+            .filter(([key]) => key.startsWith('HOLO'))
+            .forEach(([key, value]) => console.error(`${key}=${value}`));
+    }
+
+    // Helper to override environment variables
+    overrideEnv(envVars) {
         Object.entries(envVars).forEach(([key, value]) => {
             if (value !== undefined) {
                 process.env[key] = value;

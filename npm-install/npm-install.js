@@ -11,7 +11,7 @@ runner.run(async () => {
     } = process.env;
 
     // Set up environment
-    runner.setupEnv({
+    runner.overrideEnv({
         CI: 'true',
         NODE_ENV: HOLOLENS_NPM_INSTALL_ENV
     });

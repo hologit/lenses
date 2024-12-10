@@ -16,7 +16,7 @@ runner.run(async () => {
     const { HOLOLENS_NPM_RUN_COMMAND } = process.env;
 
     // Set up environment
-    runner.setupEnv({
+    runner.overrideEnv({
         CI: 'true',
         NODE_ENV: HOLOLENS_NPM_RUN_ENV
     });
