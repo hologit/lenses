@@ -94,7 +94,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   build-lens:
-    needs: [discover, build-base]
+    needs: [discover, build-base, publish-npm]
     runs-on: ubuntu-latest
     strategy:
       matrix:
