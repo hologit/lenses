@@ -94,7 +94,7 @@ class LensRunner {
             await this.exportTree(inputTree);
 
             // Run the lens-specific logic
-            const result = await callback(this);
+            const result = await callback(inputTree);
 
             // Output result
             if (typeof result === 'string') {
