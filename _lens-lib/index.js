@@ -69,39 +69,6 @@ class LensRunner {
         return await this.captureCommand('git', args);
     }
 
-    // Run the lens with common setup and error handling
-    async run({ exportTree = false } = {}, callback) {
-        try {
-            const inputTree = process.argv[2];
-            if (!inputTree) {
-                throw new Error('Input tree argument required');
-            }
-
-            // Log HOLO environment variables
-            this.logHoloEnv();
-
-            // Change to work tree directory
-            process.chdir(this.workTree);
-
-            // Export git tree if needed
-            if (exportTree) {
-                await this.exportTree(inputTree);
-            }
-
-            // Run the lens-specific logic
-            const result = await callback(inputTree);
-
-            // Output result
-            if (typeof result === 'string') {
-                process.stdout.write(result);
-            }
-
-        } catch (error) {
-            console.error(error);
-            process.exit(1);
-        }
-    }
-
     // Log environment variables starting with HOLO
     logHoloEnv() {
         Object.entries(process.env)
@@ -125,6 +92,41 @@ class LensRunner {
                 throw new Error(`${varName} environment variable is required`);
             }
         });
+    }
+
+    // Run the lens with common setup and error handling
+    static async run({ exportTree = false } = {}, callback) {
+        const runner = new LensRunner();
+
+        try {
+            const inputTree = process.argv[2];
+            if (!inputTree) {
+                throw new Error('Input tree argument required');
+            }
+
+            // Log HOLO environment variables
+            runner.logHoloEnv();
+
+            // Change to work tree directory
+            process.chdir(runner.workTree);
+
+            // Export git tree if needed
+            if (exportTree) {
+                await runner.exportTree(inputTree);
+            }
+
+            // Run the lens-specific logic
+            const result = await callback(runner, inputTree);
+
+            // Output result
+            if (typeof result === 'string') {
+                process.stdout.write(result);
+            }
+
+        } catch (error) {
+            console.error(error);
+            process.exit(1);
+        }
     }
 }
 

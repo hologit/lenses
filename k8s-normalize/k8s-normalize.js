@@ -4,9 +4,7 @@ const { LensRunner } = require('@hologit/lens-lib');
 const { yaml } = require('@hologit/lens-lib-k8s');
 const { Repo } = require('hologit');
 
-const runner = new LensRunner();
-
-runner.run({}, async (inputTree) => {
+LensRunner.run({}, async (runner, inputTree) => {
     // load env/input
     const repo = await Repo.getFromEnvironment();
     const tree = await repo.createTreeFromRef(inputTree);
