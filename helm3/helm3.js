@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const yaml = require('js-yaml');
-const { execSync } = require('child_process');
+const { execFile } = require('child_process');
 
 // Configuration from environment variables
 const {
@@ -62,6 +62,40 @@ const namespacelessKinds = [
     'volumeattachments',
 ];
 
+function captureCommand(cmd, args = [], options = {}) {
+    return execCommand(cmd, args, { ...options, $captureOutput: true});
+}
+
+function execCommand(cmd, args = [], options = {}) {
+    console.error(`executing: ${cmd} ${args.join(' ')}`);
+
+    return new Promise((resolve, reject) => {
+        const child = execFile(cmd, args, options);
+        let stdout = '';
+
+        child.stdout.on('data', (data) => {
+            if (options.$captureOutput) {
+                stdout += data;
+            } else {
+                console.error('::'+data.toString().trimEnd().replace(/\n/, '::\n'));
+            }
+        });
+
+        child.stderr.on('data', (data) => {
+            console.error('::'+data.toString().trimEnd().replace(/\n/, '::\n'));
+        });
+
+        child.on('error', reject);
+        child.on('close', (code) => {
+            if (code === 0) {
+                resolve(options.$captureOutput ? stdout : null);
+            } else {
+                reject(new Error(`Command failed with code ${code}`));
+            }
+        });
+    });
+}
+
 function isNamespaced(kind) {
     kind = kind.toLowerCase();
     return namespacelessKinds.indexOf(kind) === -1
@@ -69,6 +103,8 @@ function isNamespaced(kind) {
 }
 
 async function patchNamespaces(yamlPath) {
+    console.error('Patching namespaces...');
+
     // read options
     const fill = HOLOLENS_HELM_NAMESPACE_FILL === 'true';
     const override = HOLOLENS_HELM_NAMESPACE_OVERRIDE === 'true';
@@ -87,6 +123,7 @@ async function patchNamespaces(yamlPath) {
     const objects = yaml.loadAll(fs.readFileSync(yamlPath, 'utf8'));
 
     // patch namespaces
+    let patchedCount = 0;
     for (const object of objects) {
         // null values indicate empty documents
         if (!object) {
@@ -111,6 +148,7 @@ async function patchNamespaces(yamlPath) {
         if (override || (fill && !namespace)) {
             object.metadata.namespace = defaultNamespace;
             console.error(`namespacing ${defaultNamespace}/${kind}/${name}`);
+            patchedCount++;
         }
     }
 
@@ -122,23 +160,22 @@ async function patchNamespaces(yamlPath) {
             .map(object => yaml.dump(object))
             .join('\n---\n\n')
     );
-    console.error(`patched namespaces in ${yamlPath}`);
+    console.error(`patched ${patchedCount} namespaces in ${yamlPath}`);
 }
 
-function buildManifest() {
+async function buildManifest() {
     // Install helm dependencies
-    console.error('executing: helm dependency update');
-    execSync(`cd "${HOLOLENS_HELM_CHART_PATH}" && helm dependency update`, { stdio: 'inherit' });
+    await execCommand('helm', ['dependency', 'update', HOLOLENS_HELM_CHART_PATH]);
 
     // Prepare helm template args
-    const helmArgs = [];
+    const helmArgs = ['template'];
 
     if (HOLOLENS_HELM_NAMESPACE) {
-        helmArgs.push(`--namespace ${HOLOLENS_HELM_NAMESPACE}`);
+        helmArgs.push('--namespace', HOLOLENS_HELM_NAMESPACE);
     }
 
     if (HOLOLENS_HELM_RELEASE_NAME) {
-        helmArgs.push(`--release-name ${HOLOLENS_HELM_RELEASE_NAME}`);
+        helmArgs.push('--release-name', HOLOLENS_HELM_RELEASE_NAME);
     }
 
     if (HOLOLENS_HELM_INCLUDE_CRDS === 'true') {
@@ -148,7 +185,7 @@ function buildManifest() {
     if (HOLOLENS_HELM_VALUE_FILES) {
         HOLOLENS_HELM_VALUE_FILES.split(',').forEach(file => {
             if (file.trim()) {
-                helmArgs.push(`--values ${file.trim()}`);
+                helmArgs.push('--values', file.trim());
             }
         });
     }
@@ -156,12 +193,13 @@ function buildManifest() {
     if (HOLOLENS_HELM_KUBE_APIS) {
         HOLOLENS_HELM_KUBE_APIS.split(',').forEach(api => {
             if (api.trim()) {
-                helmArgs.push(`--api-versions ${api.trim()}`);
+                helmArgs.push('--api-versions', api.trim());
             }
         });
     }
 
-    helmArgs.push(`--kube-version ${HOLOLENS_HELM_KUBE_VERSION}`);
+    helmArgs.push('--kube-version', HOLOLENS_HELM_KUBE_VERSION);
+    helmArgs.push(HOLOLENS_HELM_CHART_PATH);
 
     // Create output directory
     fs.mkdirSync(HOLOLENS_HELM_OUTPUT_ROOT, { recursive: true });
@@ -178,11 +216,7 @@ metadata:
     }
 
     // Execute helm template
-    console.error(`executing: helm template ${helmArgs.join(' ')}`);
-    const helmOutput = execSync(
-        `helm template ${helmArgs.join(' ')} "${HOLOLENS_HELM_CHART_PATH}"`,
-        { encoding: 'utf8' }
-    );
+    const helmOutput = await captureCommand('helm', helmArgs);
 
     // Write combined output
     fs.writeFileSync(OUTPUT_PATH, namespaceDoc + helmOutput);
@@ -195,14 +229,20 @@ async function main() {
             throw new Error('Input tree argument required');
         }
 
+        // Log HOLO environment variables
+        Object.entries(process.env)
+            .filter(([key]) => key.startsWith('HOLO'))
+            .forEach(([key, value]) => console.error(`${key}=${value}`));
+
+
         // Run from Git work tree
         process.chdir(GIT_WORK_TREE);
 
         // Export git tree
-        execSync(`git holo lens export-tree "${inputTree}"`, { stdio: 'inherit' });
+        await execCommand('git', ['holo', 'lens', 'export-tree', inputTree]);
 
         // Build manifest
-        buildManifest();
+        await buildManifest();
 
         // Patch namespaces if needed
         if (HOLOLENS_HELM_NAMESPACE_FILL === 'true' || HOLOLENS_HELM_NAMESPACE_OVERRIDE === 'true') {
@@ -210,13 +250,10 @@ async function main() {
         }
 
         // Add output to git index
-        execSync(`git add -f "${OUTPUT_PATH}"`, { stdio: 'inherit' });
+        await execCommand('git', ['add', '-f', OUTPUT_PATH]);
 
         // Output tree hash
-        const treeHash = execSync(
-            `git write-tree --prefix="${HOLOLENS_HELM_OUTPUT_ROOT}"`,
-            { encoding: 'utf8' }
-        );
+        const treeHash = await captureCommand('git', ['write-tree', '--prefix=' + HOLOLENS_HELM_OUTPUT_ROOT]);
         process.stdout.write(treeHash);
 
     } catch (error) {
