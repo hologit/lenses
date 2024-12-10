@@ -29,7 +29,7 @@ LensRunner.run({}, async (runner, inputTree) => {
         let objects;
 
         try {
-            objects = yaml.safeLoadAll(await blob.read());
+            objects = yaml.loadAll(await blob.read());
         } catch (err) {
             console.error(`Failed to parse: ${blobPath}\n\n${err}`);
             process.exit(1);
@@ -67,7 +67,7 @@ LensRunner.run({}, async (runner, inputTree) => {
             }
 
             const objectPath = `${namespace || '_'}/${kind}/${name}.yaml`;
-            await outputTree.writeChild(objectPath, yaml.safeDump(object, { sortKeys: true }));
+            await outputTree.writeChild(objectPath, yaml.dump(object, { sortKeys: true }));
             console.error(`${blobPath}→${objectPath}`);
             objectIndex++;
         }

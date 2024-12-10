@@ -78,7 +78,7 @@ async function patchNamespaces(yamlPath, {
     }
 
     // load objects
-    const objects = yaml.safeLoadAll(fs.readFileSync(yamlPath, 'utf8'));
+    const objects = yaml.loadAll(fs.readFileSync(yamlPath, 'utf8'));
 
     // patch namespaces
     let patchedCount = 0;
@@ -115,7 +115,7 @@ async function patchNamespaces(yamlPath, {
         yamlPath,
         objects
             .filter(obj => obj !== null)
-            .map(object => yaml.safeDump(object))
+            .map(object => yaml.dump(object))
             .join('\n---\n\n')
     );
     console.error(`patched ${patchedCount} namespaces in ${yamlPath}`);

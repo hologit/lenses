@@ -44,6 +44,6 @@ ENV GIT_WORK_TREE=/working
 CMD ["node", "/lens-server/server.js"]
 
 # Set up lens template
-ENV HOLOLENS_ENTRYPOINT=/lens/lens-tree
+ENV HOLOLENS_ENTRYPOINT=/lens/index.js
 WORKDIR /lens
-COPY lens-tree .
+COPY index.js .

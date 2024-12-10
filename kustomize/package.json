@@ -2,7 +2,7 @@
   "name": "@hologit/lens-kustomize",
   "version": "1.0.0",
   "description": "hologit lens for kustomize manifests",
-  "main": "kustomize.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
