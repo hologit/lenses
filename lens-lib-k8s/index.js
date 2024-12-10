@@ -1,4 +1,4 @@
-const { yaml } = require('../lens-lib');
+const { yaml } = require('js-yaml');
 
 // List of kinds that don't support namespaces
 const namespacelessKinds = [
@@ -130,5 +130,8 @@ metadata:
 
 module.exports = {
     K8sManifestHandler,
-    namespacelessKinds
+    namespacelessKinds,
+
+    // Export common utilities that might be needed by lenses
+    yaml
 };

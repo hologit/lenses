@@ -9,6 +9,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@hologit/lens-lib": "file:../lens-lib"
+    "js-yaml": "^4.1.0"
   }
 }

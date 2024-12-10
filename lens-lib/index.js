@@ -144,7 +144,5 @@ class LensRunner {
 }
 
 module.exports = {
-    LensRunner,
-    // Export common utilities that might be needed by lenses
-    yaml: require('js-yaml')
+    LensRunner
 };
