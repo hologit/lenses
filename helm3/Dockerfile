@@ -10,8 +10,8 @@ COPY helm3/package*.json ./
 RUN npm install
 
 # Copy lens libs
-COPY _lens-lib /lens/_lens-lib
-COPY _lens-lib-k8s /lens/_lens-lib-k8s
+COPY _lens-lib /_lens-lib
+COPY _lens-lib-k8s /_lens-lib-k8s
 
 # Copy lens script
 COPY helm3/index.js ./
