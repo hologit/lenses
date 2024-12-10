@@ -24,8 +24,8 @@ jobs:
           MAJOR_VERSION="${MINOR_VERSION%.*}"
 
           echo "patch=${PATCH_VERSION}" >> $GITHUB_OUTPUT
-          echo "minor=${PATCH_VERSION}" >> $GITHUB_OUTPUT
-          echo "major=${PATCH_VERSION}" >> $GITHUB_OUTPUT
+          echo "minor=${MINOR_VERSION}" >> $GITHUB_OUTPUT
+          echo "major=${MAJOR_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Discover container images for build matrix
         id: set-matrix
@@ -77,8 +77,8 @@ jobs:
           push: true
           tags: |
             ghcr.io/hologit/lenses/${{ matrix.image }}:latest
-            ghcr.io/hologit/lenses/${{ matrix.image }}:${{ needs.discover.outputs.major }}
-            ghcr.io/hologit/lenses/${{ matrix.image }}:${{ needs.discover.outputs.minor }}
-            ghcr.io/hologit/lenses/${{ matrix.image }}:${{ needs.discover.outputs.patch }}
+            ghcr.io/hologit/lenses/${{ matrix.image }}:${{ needs.discover.outputs.version-major }}
+            ghcr.io/hologit/lenses/${{ matrix.image }}:${{ needs.discover.outputs.version-minor }}
+            ghcr.io/hologit/lenses/${{ matrix.image }}:${{ needs.discover.outputs.version-patch }}
           cache-from: type=registry,ref=ghcr.io/hologit/lenses/${{ matrix.image }}:latest
           cache-to: type=inline
