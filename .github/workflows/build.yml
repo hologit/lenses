@@ -83,6 +83,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Setting package.json version
+        if: github.event_name == 'release'
         run: npm version --no-git-tag-version "${{ needs.discover.outputs.version-patch }}"
 
       - run: npm install
