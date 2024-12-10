@@ -1,0 +1,11 @@
+{
+  "name": "@hologit/lens-npm-install",
+  "version": "1.0.0",
+  "description": "hologit lens for installing npm dependencies",
+  "main": "npm-install.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
