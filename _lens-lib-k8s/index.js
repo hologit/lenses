@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { yaml } = require('../lens-lib');
+const yaml = require('js-yaml');
 
 // List of kinds that don't support namespaces
 const namespacelessKinds = [
