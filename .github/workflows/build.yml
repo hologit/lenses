@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./lib-lens
+        working-directory: _lens-lib
     steps:
       - uses: actions/checkout@v4
 
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./lib-lens-k8s
+        working-directory: _lens-lib-k8s
     steps:
       - uses: actions/checkout@v4
 
