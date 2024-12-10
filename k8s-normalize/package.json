@@ -1,6 +1,15 @@
 {
+  "name": "@hologit/lens-k8s-normalize",
+  "version": "1.0.0",
+  "description": "hologit lens for normalizing kubernetes manifests",
+  "main": "k8s-normalize.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "hologit": "^0.31.0",
-    "js-yaml": "^3.14.0"
+    "@hologit/lens-lib": "^0.1.2",
+    "@hologit/lens-lib-k8s": "^0.1.2"
   }
 }
