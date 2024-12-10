@@ -9,5 +9,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "hologit": "^0.44.0"
   }
 }
