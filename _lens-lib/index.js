@@ -70,7 +70,7 @@ class LensRunner {
     }
 
     // Run the lens with common setup and error handling
-    async run(callback) {
+    async run({ exportTree = false } = {}, callback) {
         try {
             const inputTree = process.argv[2];
             if (!inputTree) {
@@ -83,8 +83,10 @@ class LensRunner {
             // Change to work tree directory
             process.chdir(this.workTree);
 
-            // Export git tree
-            await this.exportTree(inputTree);
+            // Export git tree if needed
+            if (exportTree) {
+                await this.exportTree(inputTree);
+            }
 
             // Run the lens-specific logic
             const result = await callback(inputTree);

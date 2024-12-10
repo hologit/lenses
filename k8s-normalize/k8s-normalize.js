@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-const { LensRunner } = require('../lens-lib');
-const { yaml } = require('../lens-lib-k8s');
+const { LensRunner } = require('@hologit/lens-lib');
+const { yaml } = require('@hologit/lens-lib-k8s');
 const { Repo } = require('hologit');
 
 const runner = new LensRunner();
 
-runner.run(async (inputTree) => {
+runner.run({}, async (inputTree) => {
     // load env/input
     const repo = await Repo.getFromEnvironment();
     const tree = await repo.createTreeFromRef(inputTree);
@@ -76,6 +76,5 @@ runner.run(async (inputTree) => {
     }
 
     // Write tree and return hash
-    const treeHash = await outputTree.write();
-    return treeHash;
+    return await outputTree.write();
 });

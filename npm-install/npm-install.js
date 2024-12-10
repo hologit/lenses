@@ -4,7 +4,7 @@ const { LensRunner } = require('@hologit/lens-lib');
 
 const runner = new LensRunner();
 
-runner.run(async () => {
+runner.run({ exportTree: true }, async () => {
     const {
         HOLOLENS_NPM_INSTALL_COMMAND = 'npm ci',
         HOLOLENS_NPM_INSTALL_ENV = 'production',

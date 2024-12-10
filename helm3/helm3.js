@@ -7,7 +7,7 @@ const { K8sManifestHandler } = require('@hologit/lens-lib-k8s');
 const runner = new LensRunner();
 const k8s = new K8sManifestHandler(runner);
 
-runner.run(async () => {
+runner.run({ exportTree: true }, async () => {
     const {
         HOLOLENS_HELM_OUTPUT_ROOT = 'output',
         HOLOLENS_HELM_OUTPUT_FILENAME = 'manifest.yaml',
