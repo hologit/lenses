@@ -1,4 +1,5 @@
-const { yaml } = require('js-yaml');
+const fs = require('fs');
+const yaml = require('js-yaml');
 
 // List of kinds that don't support namespaces
 const namespacelessKinds = [
@@ -40,97 +41,91 @@ const namespacelessKinds = [
     'volumeattachments',
 ];
 
-class K8sManifestHandler {
-    constructor(runner, options = {}) {
-        this.runner = runner;
-        this.options = options;
-    }
+// Check if a kind supports namespaces
+function isNamespaced(kind) {
+    kind = kind.toLowerCase();
+    return namespacelessKinds.indexOf(kind) === -1
+        && namespacelessKinds.indexOf(`${kind}s`) === -1;
+}
 
-    // Check if a kind supports namespaces
-    isNamespaced(kind) {
-        kind = kind.toLowerCase();
-        return namespacelessKinds.indexOf(kind) === -1
-            && namespacelessKinds.indexOf(`${kind}s`) === -1;
-    }
+// Generate namespace manifest
+function generateNamespaceManifest(namespace) {
+    if (!namespace) return '';
 
-    // Generate namespace manifest
-    generateNamespaceManifest(namespace) {
-        if (!namespace) return '';
-
-        return `---
+    return `---
 kind: Namespace
 apiVersion: v1
 metadata:
   name: "${namespace}"
 `;
+}
+
+// Patch namespaces in a manifest file
+async function patchNamespaces(yamlPath, {
+    namespace,
+    fill = false,
+    override = false
+}) {
+    console.error('Patching namespaces...');
+
+    if (!yamlPath) {
+        throw new Error('yaml-path required');
     }
 
-    // Patch namespaces in a manifest file
-    async patchNamespaces(yamlPath, envPrefix = 'HOLOLENS') {
-        console.error('Patching namespaces...');
-
-        // read options
-        const fill = this.runner.getEnv(`${envPrefix}_NAMESPACE_FILL`) === 'true';
-        const override = this.runner.getEnv(`${envPrefix}_NAMESPACE_OVERRIDE`) === 'true';
-        const defaultNamespace = this.runner.getEnv(`${envPrefix}_NAMESPACE`);
-
-        if (!yamlPath) {
-            throw new Error('yaml-path required');
-        }
-
-        if (!fill && !override) {
-            console.error('neither namespace_fill or namespace_override is enabled, doing nothing');
-            return;
-        }
-
-        // load objects
-        const objects = yaml.loadAll(await this.runner.readFile(yamlPath));
-
-        // patch namespaces
-        let patchedCount = 0;
-        for (const object of objects) {
-            // null values indicate empty documents
-            if (!object) {
-                continue;
-            }
-
-            if (!object.metadata) {
-                throw new Error('encountered object with no metadata');
-            }
-
-            const { kind, metadata: { name, namespace } } = object;
-
-            if (!name) {
-                throw new Error('encountered object with no name');
-            }
-
-            // some kinds don't have namespaces
-            if (!this.isNamespaced(kind)) {
-                continue;
-            }
-
-            if (override || (fill && !namespace)) {
-                object.metadata.namespace = defaultNamespace;
-                console.error(`namespacing ${defaultNamespace}/${kind}/${name}`);
-                patchedCount++;
-            }
-        }
-
-        // save changes
-        await this.runner.writeFile(
-            yamlPath,
-            objects
-                .filter(obj => obj !== null)
-                .map(object => yaml.dump(object))
-                .join('\n---\n\n')
-        );
-        console.error(`patched ${patchedCount} namespaces in ${yamlPath}`);
+    if (!fill && !override) {
+        console.error('neither namespace_fill or namespace_override is enabled, doing nothing');
+        return;
     }
+
+    // load objects
+    const objects = yaml.safeLoadAll(fs.readFileSync(yamlPath, 'utf8'));
+
+    // patch namespaces
+    let patchedCount = 0;
+    for (const object of objects) {
+        // null values indicate empty documents
+        if (!object) {
+            continue;
+        }
+
+        if (!object.metadata) {
+            throw new Error('encountered object with no metadata');
+        }
+
+        const { kind, metadata: { name, namespace: currentNamespace } } = object;
+
+        if (!name) {
+            throw new Error('encountered object with no name');
+        }
+
+        // some kinds don't have namespaces
+        if (!isNamespaced(kind)) {
+            continue;
+        }
+
+        if (override || (fill && !currentNamespace)) {
+            object.metadata.namespace = namespace;
+            console.error(`namespacing ${namespace}/${kind}/${name}`);
+            patchedCount++;
+        }
+    }
+
+    // save changes
+    fs.writeFileSync(
+        yamlPath,
+        objects
+            .filter(obj => obj !== null)
+            .map(object => yaml.safeDump(object))
+            .join('\n---\n\n')
+    );
+    console.error(`patched ${patchedCount} namespaces in ${yamlPath}`);
 }
 
 module.exports = {
-    K8sManifestHandler,
     namespacelessKinds,
+    isNamespaced,
+    generateNamespaceManifest,
+    patchNamespaces,
 
     // Export common utilities that might be needed by lenses
     yaml

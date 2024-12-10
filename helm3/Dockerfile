@@ -7,7 +7,7 @@ RUN apk add --no-cache helm
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy lens script
 COPY helm3.js ./

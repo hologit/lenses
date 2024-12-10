@@ -4,7 +4,7 @@ FROM ghcr.io/hologit/lenses/base:node-20
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy lens script
 COPY k8s-normalize.js ./

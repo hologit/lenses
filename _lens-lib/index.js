@@ -48,13 +48,6 @@ class LensRunner {
         return this.execCommand(cmd, args, { ...options, $captureOutput: true });
     }
 
-    // Log environment variables starting with HOLO
-    logHoloEnv() {
-        Object.entries(process.env)
-            .filter(([key]) => key.startsWith('HOLO'))
-            .forEach(([key, value]) => console.error(`${key}=${value}`));
-    }
-
     // Export git tree
     async exportTree(treeHash) {
         console.error(`Exporting tree to scratch directory: ${treeHash}`);
@@ -76,39 +69,15 @@ class LensRunner {
         return await this.captureCommand('git', args);
     }
 
-    // Run the lens with common setup and error handling
-    async run(callback) {
-        try {
-            const inputTree = process.argv[2];
-            if (!inputTree) {
-                throw new Error('Input tree argument required');
-            }
-
-            // Log HOLO environment variables
-            this.logHoloEnv();
-
-            // Change to work tree directory
-            process.chdir(this.workTree);
-
-            // Export git tree
-            await this.exportTree(inputTree);
-
-            // Run the lens-specific logic
-            const result = await callback(this);
-
-            // Output result
-            if (typeof result === 'string') {
-                process.stdout.write(result);
-            }
-
-        } catch (error) {
-            console.error(error);
-            process.exit(1);
-        }
+    // Log environment variables starting with HOLO
+    logHoloEnv() {
+        Object.entries(process.env)
+            .filter(([key]) => key.startsWith('HOLO'))
+            .forEach(([key, value]) => console.error(`${key}=${value}`));
     }
 
-    // Helper to set up common environment variables
-    setupEnv(envVars) {
+    // Helper to override environment variables
+    overrideEnv(envVars) {
         Object.entries(envVars).forEach(([key, value]) => {
             if (value !== undefined) {
                 process.env[key] = value;
@@ -125,21 +94,39 @@ class LensRunner {
         });
     }
 
-    // Helper to get environment variables with defaults
-    getEnv(varName, defaultValue) {
-        return process.env[varName] || defaultValue;
-    }
+    // Run the lens with common setup and error handling
+    static async run({ exportTree = false } = {}, callback) {
+        const runner = new LensRunner();
 
-    // Helper to create output directory
-    async createOutputDir(dir) {
-        const fs = require('fs');
-        fs.mkdirSync(dir, { recursive: true });
-    }
+        try {
+            const inputTree = process.argv[2];
+            if (!inputTree) {
+                throw new Error('Input tree argument required');
+            }
 
-    // Helper to write file
-    async writeFile(path, content) {
-        const fs = require('fs');
-        fs.writeFileSync(path, content);
+            // Log HOLO environment variables
+            runner.logHoloEnv();
+
+            // Change to work tree directory
+            process.chdir(runner.workTree);
+
+            // Export git tree if needed
+            if (exportTree) {
+                await runner.exportTree(inputTree);
+            }
+
+            // Run the lens-specific logic
+            const result = await callback(runner, inputTree);
+
+            // Output result
+            if (typeof result === 'string') {
+                process.stdout.write(result);
+            }
+
+        } catch (error) {
+            console.error(error);
+            process.exit(1);
+        }
     }
 }
 

@@ -1,21 +1,16 @@
 #!/usr/bin/env node
 
+const { LensRunner } = require('@hologit/lens-lib');
+const { yaml } = require('@hologit/lens-lib-k8s');
 const { Repo } = require('hologit');
-const yaml = require('js-yaml');
 
-
-outputResult(lensTree(process.argv[2]));
-
-async function lensTree(treeHash) {
-
+LensRunner.run({}, async (runner, inputTree) => {
     // load env/input
     const repo = await Repo.getFromEnvironment();
-    const tree = await repo.createTreeFromRef(treeHash);
-
+    const tree = await repo.createTreeFromRef(inputTree);
 
     // init output
     const outputTree = repo.createTree();
-
 
     // check env/input
     if (!tree) {
@@ -25,13 +20,6 @@ async function lensTree(treeHash) {
     if (!tree.isTree) {
         throw new Error('input must be a tree');
     }
-
-
-    // configure js-yaml dump options
-    const yamlDumpOptions = {
-        sortKeys: true // could be a function to sort apiVersion, kind, metadata, spec, ...
-    };
-
 
     // iterate input
     const blobs = await tree.getBlobMap();
@@ -79,26 +67,12 @@ async function lensTree(treeHash) {
             }
 
             const objectPath = `${namespace || '_'}/${kind}/${name}.yaml`;
-            await outputTree.writeChild(objectPath, yaml.safeDump(object, yamlDumpOptions))
+            await outputTree.writeChild(objectPath, yaml.safeDump(object, { sortKeys: true }));
             console.error(`${blobPath}→${objectPath}`);
             objectIndex++;
         }
     }
 
-
-    return outputTree;
-}
-
-
-async function outputResult(result) {
-    result = await result;
-
-    if (result.isTree) {
-        console.log(await result.write());
-        process.exit(0);
-        return;
-    }
-
-    console.error('no result');
-    process.exit(1);
-}
+    // Write tree and return hash
+    return await outputTree.write();
+});
