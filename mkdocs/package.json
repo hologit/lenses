@@ -1,0 +1,14 @@
+{
+  "name": "@hologit/lens-mkdocs",
+  "version": "1.0.0",
+  "description": "hologit lens for building MkDocs documentation sites",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@alexlafroscia/yaml-merge": "^4.1.0"
+  }
+}
