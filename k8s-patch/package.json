@@ -1,0 +1,15 @@
+{
+  "name": "@hologit/lens-k8s-patch",
+  "version": "2.0.0",
+  "description": "hologit lens for patching kubernetes manifests with JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "hologit": "^0.44.0",
+    "js-yaml": "^3.14.0"
+  }
+}
