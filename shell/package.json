@@ -1,0 +1,17 @@
+{
+  "name": "@hologit/lens-shell",
+  "version": "1.0.0",
+  "description": "Run an arbitrary shell script on the input tree",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "hologit",
+    "lens",
+    "shell",
+    "bash"
+  ],
+  "author": "Hologit",
+  "license": "MIT"
+}
