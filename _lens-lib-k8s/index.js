@@ -1,6 +1,65 @@
 const fs = require('fs');
 const yaml = require('js-yaml');
 
+// Create a custom int type that handles both regular ints and octals
+const CustomIntType = new yaml.Type('tag:yaml.org,2002:int', {
+    kind: 'scalar',
+    resolve: function (data) {
+        if (data === null || data === undefined) return false;
+
+        // Check for octal pattern first
+        const octalPattern = /^0[0-7]+$/;
+        if (octalPattern.test(data)) {
+            return true;
+        }
+
+        // Otherwise check for regular int patterns
+        const intPattern = /^[-+]?[0-9]+$/;
+        const hexPattern = /^0x[0-9a-fA-F]+$/;
+        return intPattern.test(data) || hexPattern.test(data);
+    },
+    construct: function (data) {
+        const octalPattern = /^0[0-7]+$/;
+
+        if (octalPattern.test(data)) {
+            // Parse as octal and return a wrapper object
+            const value = parseInt(data, 8);
+            return { __octal: true, value: value, original: data };
+        }
+
+        // Parse as regular int
+        return parseInt(data, 10);
+    },
+    predicate: function (object) {
+        // Explicitly reject null and undefined
+        if (object === null || object === undefined) {
+            return false;
+        }
+        // Check if this is our octal wrapper object or a regular number
+        if (typeof object === 'object' && object.__octal === true) {
+            return true;
+        }
+        return Object.prototype.toString.call(object) === '[object Number]' &&
+               (object % 1 === 0 && !isNaN(object));
+    },
+    represent: function (object) {
+        // If it's an octal wrapper, use the stored format
+        if (object && typeof object === 'object' && object.__octal === true) {
+            return object.original;
+        }
+        // Otherwise represent as decimal
+        return String(object);
+    },
+    defaultStyle: 'decimal'
+});
+
+// Create a custom schema with our custom int type
+// We extend the CORE schema (which has null, bool, etc.) and add our custom int type
+// This ensures null/bool are processed before our int type
+const OCTAL_SCHEMA = yaml.DEFAULT_SCHEMA.extend({
+    implicit: [CustomIntType]
+});
+
 // List of kinds that don't support namespaces
 const namespacelessKinds = [
     'apiservices',
@@ -128,5 +187,6 @@ module.exports = {
     patchNamespaces,
 
     // Export common utilities that might be needed by lenses
-    yaml
+    yaml,
+    OCTAL_SCHEMA
 };
