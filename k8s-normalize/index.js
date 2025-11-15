@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { LensRunner } = require('../_lens-lib');
-const { yaml } = require('../_lens-lib-k8s');
+const { yaml, OCTAL_SCHEMA } = require('../_lens-lib-k8s');
 const { Repo } = require('hologit');
 
 LensRunner.run({}, async (runner, inputTree) => {
@@ -29,7 +29,7 @@ LensRunner.run({}, async (runner, inputTree) => {
         let objects;
 
         try {
-            objects = yaml.loadAll(await blob.read());
+            objects = yaml.loadAll(await blob.read(), { schema: OCTAL_SCHEMA });
         } catch (err) {
             console.error(`Failed to parse: ${blobPath}\n\n${err}`);
             process.exit(1);
@@ -67,7 +67,7 @@ LensRunner.run({}, async (runner, inputTree) => {
             }
 
             const objectPath = `${namespace || '_'}/${kind}/${name}.yaml`;
-            await outputTree.writeChild(objectPath, yaml.dump(object, { sortKeys: true }));
+            await outputTree.writeChild(objectPath, yaml.dump(object, { sortKeys: true, schema: OCTAL_SCHEMA }));
             console.error(`${blobPath}→${objectPath}`);
             objectIndex++;
         }
