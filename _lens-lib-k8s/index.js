@@ -60,6 +60,26 @@ const OCTAL_SCHEMA = yaml.DEFAULT_SCHEMA.extend({
     implicit: [CustomIntType]
 });
 
+/**
+ * Load YAML content with OCTAL_SCHEMA by default
+ * @param {string} content - YAML content to parse
+ * @param {object} options - Additional options to pass to yaml.loadAll
+ * @returns {array} Array of parsed objects
+ */
+function loadYaml(content, options = {}) {
+    return yaml.loadAll(content, { schema: OCTAL_SCHEMA, ...options });
+}
+
+/**
+ * Dump object to YAML with OCTAL_SCHEMA by default
+ * @param {object} object - Object to serialize
+ * @param {object} options - Additional options to pass to yaml.dump
+ * @returns {string} YAML string
+ */
+function dumpYaml(object, options = {}) {
+    return yaml.dump(object, { schema: OCTAL_SCHEMA, ...options });
+}
+
 // List of kinds that don't support namespaces
 const namespacelessKinds = [
     'apiservices',
@@ -137,7 +157,7 @@ async function patchNamespaces(yamlPath, {
     }
 
     // load objects
-    const objects = yaml.loadAll(fs.readFileSync(yamlPath, 'utf8'));
+    const objects = loadYaml(fs.readFileSync(yamlPath, 'utf8'));
 
     // patch namespaces
     let patchedCount = 0;
@@ -174,7 +194,7 @@ async function patchNamespaces(yamlPath, {
         yamlPath,
         objects
             .filter(obj => obj !== null)
-            .map(object => yaml.dump(object))
+            .map(object => dumpYaml(object))
             .join('\n---\n\n')
     );
     console.error(`patched ${patchedCount} namespaces in ${yamlPath}`);
@@ -186,7 +206,9 @@ module.exports = {
     generateNamespaceManifest,
     patchNamespaces,
 
-    // Export common utilities that might be needed by lenses
+    // Export YAML utilities
     yaml,
-    OCTAL_SCHEMA
+    OCTAL_SCHEMA,
+    loadYaml,
+    dumpYaml
 };
