@@ -15,6 +15,7 @@ LensRunner.run({ exportTree: true }, async (runner) => {
         HOLOLENS_HELM_RELEASE_NAME,
         HOLOLENS_HELM_INCLUDE_CRDS,
         HOLOLENS_HELM_VALUE_FILES = '',
+        HOLOLENS_HELM_SKIP_SCHEMA_VALIDATION,
         HOLOLENS_HELM_NAMESPACE_FILL,
         HOLOLENS_HELM_NAMESPACE_OVERRIDE,
     } = process.env;
@@ -40,6 +41,10 @@ LensRunner.run({ exportTree: true }, async (runner) => {
 
     if (HOLOLENS_HELM_INCLUDE_CRDS === 'true') {
         helmArgs.push('--include-crds');
+    }
+
+    if (HOLOLENS_HELM_SKIP_SCHEMA_VALIDATION === 'true') {
+        helmArgs.push('--skip-schema-validation');
     }
 
     if (HOLOLENS_HELM_VALUE_FILES) {
