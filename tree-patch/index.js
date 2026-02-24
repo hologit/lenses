@@ -7,7 +7,7 @@ const vm = require('vm');
 LensRunner.run({}, async (runner, inputTree) => {
     // load env/input
     runner.requireEnv('HOLOLENS_TREE_PATCH_SCRIPT');
-    const { HOLOLENS_TREE_PATCH_SCRIPT } = process.env;
+    const { HOLOLENS_TREE_PATCH_SCRIPT, HOLOLENS_TREE_PATCH_PATH_SCRIPT } = process.env;
     const repo = await Repo.getFromEnvironment();
     const tree = await repo.createTreeFromRef(inputTree);
 
@@ -23,17 +23,36 @@ LensRunner.run({}, async (runner, inputTree) => {
         throw new Error('input must be a tree');
     }
 
-    // compile patch script
+    // compile scripts
     const patchFunction = vm.runInNewContext(HOLOLENS_TREE_PATCH_SCRIPT);
+    const pathFunction = HOLOLENS_TREE_PATCH_PATH_SCRIPT
+        ? vm.runInNewContext(HOLOLENS_TREE_PATCH_PATH_SCRIPT)
+        : null;
 
     // iterate input
     const blobs = await tree.getBlobMap();
     for (const blobPath in blobs) {
         const blob = blobs[blobPath];
 
+        // apply path renaming
+        let outputPath = blobPath;
+        if (pathFunction) {
+            try {
+                outputPath = pathFunction(blobPath);
+            } catch (err) {
+                console.error(`Error renaming ${blobPath}: ${err}`);
+                process.exit(1);
+            }
+        }
+
         // read content and apply patch function
         const content = await blob.read();
-        console.error(`patching ${blobPath}`);
+
+        if (outputPath !== blobPath) {
+            console.error(`patching ${blobPath} -> ${outputPath}`);
+        } else {
+            console.error(`patching ${blobPath}`);
+        }
 
         let result;
         try {
@@ -45,9 +64,9 @@ LensRunner.run({}, async (runner, inputTree) => {
 
         // write result: pass through original blob if content unchanged
         if (result === content) {
-            await outputTree.writeChild(blobPath, blob);
+            await outputTree.writeChild(outputPath, blob);
         } else {
-            await outputTree.writeChild(blobPath, result);
+            await outputTree.writeChild(outputPath, result);
         }
     }
 
