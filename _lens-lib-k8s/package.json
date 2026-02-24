@@ -8,6 +8,7 @@
   },
   "author": "",
   "license": "MIT",
+  "repository": "https://github.com/hologit/lenses",
   "dependencies": {
     "js-yaml": "^4.1.0"
   }
