@@ -1,7 +1,7 @@
 # Mark all targets as .PHONY since we want them to run every time
-.PHONY: all _base-image k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run shell
+.PHONY: all _base-image k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run shell tree-patch
 
-all: _base-image k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run shell
+all: _base-image k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run shell tree-patch
 
 _base-image:
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/base:node-20
@@ -28,4 +28,7 @@ npm-run: _base-image
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
 
 shell: _base-image
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
+
+tree-patch: _base-image
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
