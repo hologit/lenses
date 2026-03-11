@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6 \
     patch \
     gnupg \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Eclipse Temurin JDK 8
