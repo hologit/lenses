@@ -1,10 +1,13 @@
 # Mark all targets as .PHONY since we want them to run every time
-.PHONY: all _base-image k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run shell tree-patch
+.PHONY: all _base-image compass k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run sencha-app sencha-pages shell tree-patch
 
-all: _base-image k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run shell tree-patch
+all: _base-image compass k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run sencha-app sencha-pages shell tree-patch
 
 _base-image:
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/base:node-20
+
+compass: _base-image
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
 
 k8s-normalize: _base-image
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
@@ -25,6 +28,12 @@ npm-install: _base-image
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
 
 npm-run: _base-image
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
+
+sencha-app:
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
+
+sencha-pages:
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
 
 shell: _base-image

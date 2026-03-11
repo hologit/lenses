@@ -1,0 +1,9 @@
+{
+  "name": "@hologit/lens-sencha-app",
+  "version": "1.0.0",
+  "description": "Build Sencha ExtJS applications using Sencha CMD 6.6.0.13",
+  "main": "index.js",
+  "keywords": ["hologit", "lens", "sencha", "extjs"],
+  "author": "Hologit",
+  "license": "MIT"
+}

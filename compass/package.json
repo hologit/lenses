@@ -1,0 +1,9 @@
+{
+  "name": "@hologit/lens-compass",
+  "version": "1.0.0",
+  "description": "Compile SASS stylesheets using Compass 1.0.3",
+  "main": "index.js",
+  "keywords": ["hologit", "lens", "compass", "sass", "css"],
+  "author": "Hologit",
+  "license": "MIT"
+}
