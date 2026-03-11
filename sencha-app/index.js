@@ -4,18 +4,19 @@ const fs = require('fs');
 const path = require('path');
 const { LensRunner } = require('../_lens-lib');
 
-LensRunner.run({ exportTree: true }, async (runner) => {
+LensRunner.run({ exportTree: true }, async (runner, inputTree) => {
     // Validate required env
     runner.requireEnv('HOLOLENS_SENCHA_APP');
     const senchaApp = process.env.HOLOLENS_SENCHA_APP;
     const senchaWorkspace = process.env.HOLOLENS_SENCHA_WORKSPACE || '.';
     const senchaAppPath = path.join(senchaWorkspace, senchaApp);
 
-    // Validate app path exists in tree
+    // Validate app path exists in input tree
     try {
-        await runner.captureCommand('git', ['cat-file', '-t', `HEAD:${senchaAppPath}`]);
+        const type = (await runner.captureCommand('git', ['cat-file', '-t', `${inputTree}:${senchaAppPath}`])).trim();
+        if (type !== 'tree') throw new Error('not a tree');
     } catch (e) {
-        throw new Error(`hololens.sencha.app '${senchaAppPath}' does not match a top-level subtree`);
+        throw new Error(`hololens.sencha.app '${senchaAppPath}' does not match a top-level subtree of the input tree`);
     }
 
     const workTree = process.env.GIT_WORK_TREE;
