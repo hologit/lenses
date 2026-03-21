@@ -8,9 +8,12 @@ const merge = require('@alexlafroscia/yaml-merge');
 LensRunner.run({ exportTree: true }, async (runner) => {
     const {
         HOLOLENS_MKDOCS_VERSION,
+        HOLOLENS_MKDOCS_REQUIREMENTS,
         HOLOLENS_REQUIREMENTS,
         HOLOLENS_MKDOCS_OUTPUT_DIR = 'site',
     } = process.env;
+
+    const requirements = HOLOLENS_MKDOCS_REQUIREMENTS || HOLOLENS_REQUIREMENTS;
 
     // Look for mkdocs configuration overrides
     const configOverrides = fs.readdirSync('.')
@@ -58,9 +61,9 @@ LensRunner.run({ exportTree: true }, async (runner) => {
     await runner.execCommand('./.venv/bin/pip', ['install', '--upgrade', 'pip'], { env: cleanEnv });
 
     // Install mkdocs and requirements
-    if (HOLOLENS_REQUIREMENTS) {
+    if (requirements) {
         // Install from comma-separated list
-        const packages = [mkdocsPackage, ...HOLOLENS_REQUIREMENTS.split(',').map(p => p.trim())];
+        const packages = [mkdocsPackage, ...requirements.split(',').map(p => p.trim())];
         console.error(`Installing packages: ${packages.join(' ')}`);
         await runner.execCommand('./.venv/bin/pip', ['install', ...packages], { env: cleanEnv });
     } else if (fs.existsSync('requirements.txt')) {
