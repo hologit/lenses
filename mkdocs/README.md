@@ -88,7 +88,7 @@ This lens:
 
 This container-based lens replaces the older bash/Habitat-based `lens-mkdocs`. The functionality is equivalent with the following environment variable changes:
 
-- Legacy: `HOLOLENS_REQUIREMENTS` → New: `HOLOLENS_MKDOCS_REQUIREMENTS`
+- Legacy: `HOLOLENS_REQUIREMENTS` → New: `HOLOLENS_MKDOCS_REQUIREMENTS` (legacy name still supported as fallback)
 - Output directory is now configurable via `HOLOLENS_MKDOCS_OUTPUT_DIR`
 
 All other behavior remains the same, including configuration merging and Python virtual environment handling.
