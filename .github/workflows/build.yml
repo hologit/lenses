@@ -87,6 +87,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Upgrade npm for trusted publishing
+        if: github.event_name == 'release'
         run: npm install -g npm@latest
 
       - name: Setting package.json version
