@@ -12,6 +12,10 @@ class LensRunner {
 
         return new Promise((resolve, reject) => {
             const child = execFile(cmd, args, {
+                // Node's default execFile maxBuffer is 1MB; lenses like helm3
+                // routinely exceed that on large charts (e.g. cnpg with full CRDs
+                // renders to ~1.2MB) and the child gets killed with code=null.
+                maxBuffer: 100 * 1024 * 1024,
                 ...options,
                 env: {
                     ...process.env,
