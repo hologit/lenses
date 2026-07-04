@@ -41,7 +41,9 @@ class LensRunner {
                 if (code === 0) {
                     resolve(options.$captureOutput ? stdout : null);
                 } else {
-                    reject(new Error(`Command failed with code ${code}`));
+                    const error = new Error(`Command failed with code ${code}`);
+                    error.exitCode = code;
+                    reject(error);
                 }
             });
         });
@@ -129,7 +131,9 @@ class LensRunner {
 
         } catch (error) {
             console.error(error);
-            process.exit(1);
+            // propagate the failed command's real exit status so structured
+            // lens errors (v2 job protocol) can report it
+            process.exit(Number.isInteger(error && error.exitCode) ? error.exitCode : 1);
         }
     }
 }

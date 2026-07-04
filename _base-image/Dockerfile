@@ -47,7 +47,15 @@ ENV PORT=9000
 ENV GIT_DIR=/repo
 ENV GIT_WORK_TREE=/working
 
-# Start the server
+# Set up v2 lens job protocol (one-shot exec/stdio) with dual-protocol
+# dispatch: stdin=/dev/null (legacy detached engine) starts the port-9000 git
+# server via CMD, a piped stdin runs the one-shot job
+COPY _lens-sdk /hololens-sdk
+RUN chmod +x /hololens-sdk/entrypoint.sh /hololens-sdk/lens-job.sh /hololens-sdk/run-transform.js
+LABEL sh.holo.lens.protocol=2
+ENTRYPOINT ["/hololens-sdk/entrypoint.sh"]
+
+# Start the server (legacy v1 transport, exec'd by the entrypoint dispatch)
 CMD ["node", "/lens-server/server.js"]
 
 # Set up lens template
