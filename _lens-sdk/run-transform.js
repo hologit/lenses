@@ -6,21 +6,38 @@
 //
 //   - the lens spec ([holospec.lens] TOML) is squished into HOLOLENS_* env
 //     vars with the identical object-squish options (arrays coerce to
-//     comma-joined strings via Node's env stringification, same as v1)
+//     comma-joined strings via Node's env stringification, same as v1);
+//     keys beginning with `_` are engine bookkeeping (e.g. `_resolved`) and
+//     are stripped first — transforms only ever see lens-author config
 //   - $HOLOLENS_ENTRYPOINT is spawned with a single argument: a commit whose
 //     tree is the bare input tree (the v1 job commit shape)
 //   - the transform's stdout is captured as the output tree hash; stdout and
 //     stderr are relayed to our stderr (grey, like the v1 hook) and appended
 //     to the job log file
 //
-// Usage: run-transform.js <spec-file> <job-commit> <log-file>
-// Emits the output tree hash on stdout; exits with the transform's code.
+// Usage: run-transform.js <spec-file> <job-commit> <log-file> <meta-dir>
+//
+// Writes `phase` (setup|transform) and, once the transform is reached,
+// `command` into <meta-dir> for lens-job.sh's structured error commits.
+// Emits the output tree hash on stdout; exits with the transform's real
+// exit code.
 
 'use strict';
 
 const { spawn } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 const { createRequire } = require('module');
+
+const [, , specPath, jobCommit, logPath, metaDir] = process.argv;
+
+if (!specPath || !jobCommit || !logPath || !metaDir) {
+    console.error('usage: run-transform.js <spec-file> <job-commit> <log-file> <meta-dir>');
+    process.exit(64);
+}
+
+const setPhase = phase => fs.writeFileSync(path.join(metaDir, 'phase'), phase);
+setPhase('setup');
 
 // reuse the exact dependencies the v1 post-receive hook uses, from the same
 // installed location, so spec→env behavior cannot drift between transports
@@ -28,17 +45,25 @@ const hookRequire = createRequire(`${process.env.GIT_DIR || '/repo'}/hooks/packa
 const TOML = hookRequire('@iarna/toml');
 const squish = hookRequire('object-squish');
 
-const [, , specPath, jobCommit, logPath] = process.argv;
-
-if (!specPath || !jobCommit || !logPath) {
-    console.error('usage: run-transform.js <spec-file> <job-commit> <log-file>');
-    process.exit(64);
-}
-
 const lensCommand = process.env.HOLOLENS_ENTRYPOINT;
 if (!lensCommand) {
     console.error('run-transform: HOLOLENS_ENTRYPOINT is not set');
     process.exit(64);
+}
+
+// keys beginning with `_` are engine bookkeeping, never lens config
+function stripEngineKeys (value) {
+    if (Array.isArray(value)) {
+        return value.map(stripEngineKeys);
+    }
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(
+            Object.entries(value)
+                .filter(([key]) => !key.startsWith('_'))
+                .map(([key, child]) => [key, stripEngineKeys(child)])
+        );
+    }
+    return value;
 }
 
 const {
@@ -49,7 +74,7 @@ const {
 
 // identical env construction to the v1 post-receive hook
 const lensEnv = {
-    ...squish({ hololens: spec }, {
+    ...squish({ hololens: stripEngineKeys(spec) }, {
         seperator: '_',
         modifyKey: key => key.toUpperCase().replace(/-/g, '_')
     }),
@@ -57,6 +82,9 @@ const lensEnv = {
 };
 
 const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+
+fs.writeFileSync(path.join(metaDir, 'command'), `${lensCommand} ${jobCommit}`);
+setPhase('transform');
 
 process.stderr.write(`executing: ${lensCommand} ${jobCommit}\n\n`);
 
