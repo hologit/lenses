@@ -2,6 +2,12 @@ name: Build Packages
 
 on:
   pull_request:
+  push:
+    branches:
+      # publish every image as :v2 (and :v2-<shortsha>) while the v2 job
+      # protocol soaks; :latest stays bound to the release trigger below
+      - develop
+      - feat/protocol-v2
   release:
     types: [created]
 
@@ -13,8 +19,13 @@ jobs:
       version-patch: ${{ steps.set-version.outputs.patch }}
       version-minor: ${{ steps.set-version.outputs.minor }}
       version-major: ${{ steps.set-version.outputs.major }}
+      shortsha: ${{ steps.set-shortsha.outputs.shortsha }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set short SHA
+        id: set-shortsha
+        run: echo "shortsha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       - name: Get release version
         id: set-version
@@ -45,11 +56,14 @@ jobs:
 
   build-base:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Login to GitHub Container Registry
-        if: github.event_name == 'release'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -61,9 +75,13 @@ jobs:
         with:
           context: .
           file: _base-image/Dockerfile
-          push: ${{ github.event_name == 'release' }}
-          tags: ghcr.io/hologit/lenses/base:node-20
-          cache-from: type=registry,ref=ghcr.io/hologit/lenses/base:node-20
+          push: ${{ github.event_name != 'pull_request' }}
+          # branch pushes publish the base under a :node-20-v2 tag so lens
+          # builds can substitute it without touching the released :node-20
+          tags: ${{ github.event_name == 'push' && 'ghcr.io/hologit/lenses/base:node-20-v2' || 'ghcr.io/hologit/lenses/base:node-20' }}
+          cache-from: |
+            type=registry,ref=ghcr.io/hologit/lenses/base:node-20
+            type=registry,ref=ghcr.io/hologit/lenses/base:node-20-v2
           cache-to: type=inline
 
   publish-npm:
@@ -101,6 +119,9 @@ jobs:
   build-lens:
     needs: [discover, build-base]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         image: ${{ fromJson(needs.discover.outputs.matrix) }}
@@ -108,7 +129,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Login to GitHub Container Registry
-        if: github.event_name == 'release'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -120,8 +141,15 @@ jobs:
         with:
           context: .
           file: ${{ matrix.image }}/Dockerfile
-          push: ${{ github.event_name == 'release' }}
+          push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ github.event_name == 'release' && format('ghcr.io/hologit/lenses/{0}:latest,ghcr.io/hologit/lenses/{0}:{1},ghcr.io/hologit/lenses/{0}:{2},ghcr.io/hologit/lenses/{0}:{3}', matrix.image, needs.discover.outputs.version-major, needs.discover.outputs.version-minor, needs.discover.outputs.version-patch) }}
-          cache-from: type=registry,ref=ghcr.io/hologit/lenses/${{ matrix.image }}:latest
+            ${{ github.event_name == 'release' && format('ghcr.io/hologit/lenses/{0}:latest,ghcr.io/hologit/lenses/{0}:{1},ghcr.io/hologit/lenses/{0}:{2},ghcr.io/hologit/lenses/{0}:{3}', matrix.image, needs.discover.outputs.version-major, needs.discover.outputs.version-minor, needs.discover.outputs.version-patch) || '' }}
+            ${{ github.event_name == 'push' && format('ghcr.io/hologit/lenses/{0}:v2,ghcr.io/hologit/lenses/{0}:v2-{1}', matrix.image, needs.discover.outputs.shortsha) || '' }}
+          # branch pushes build against the :node-20-v2 base published by
+          # build-base; FROM lines still name :node-20, so substitute it via a
+          # named build context (releases keep building against :node-20)
+          build-contexts: ${{ github.event_name == 'push' && 'ghcr.io/hologit/lenses/base:node-20=docker-image://ghcr.io/hologit/lenses/base:node-20-v2' || '' }}
+          cache-from: |
+            type=registry,ref=ghcr.io/hologit/lenses/${{ matrix.image }}:latest
+            type=registry,ref=ghcr.io/hologit/lenses/${{ matrix.image }}:v2
           cache-to: type=inline
