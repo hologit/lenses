@@ -1,0 +1,9 @@
+{
+  "name": "@hologit/lens-sencha-package",
+  "version": "1.0.0",
+  "description": "Compile a Sencha ExtJS package using Sencha CMD 6.6.0.13",
+  "main": "index.js",
+  "keywords": ["hologit", "lens", "sencha", "extjs", "package"],
+  "author": "Hologit",
+  "license": "MIT"
+}
