@@ -22,8 +22,10 @@ RUN mkdir -p /etc/apt/keyrings \
     && apt-get update && apt-get install -y --no-install-recommends temurin-8-jre \
     && rm -rf /var/lib/apt/lists/*
 
-# Download and install Sencha CMD 6.6.0.13
-RUN curl -fsSL -o /tmp/sencha-cmd.zip "http://cdn.sencha.com/cmd/6.6.0.13/no-jre/SenchaCmd-6.6.0.13-linux-amd64.sh.zip" \
+# Download and install Sencha CMD 6.6.0.13 (checksum-pinned — the CDN serves a
+# fixed historical artifact)
+RUN curl -fsSL -o /tmp/sencha-cmd.zip "https://cdn.sencha.com/cmd/6.6.0.13/no-jre/SenchaCmd-6.6.0.13-linux-amd64.sh.zip" \
+    && echo "e45e7a0806165da462857af26c37e360b8b2c37a2c011e71ba02a0d0eb64b0b3  /tmp/sencha-cmd.zip" | sha256sum -c - \
     && cd /tmp && unzip sencha-cmd.zip \
     && chmod +x SenchaCmd-*.sh \
     && ./SenchaCmd-*.sh -Dall=true -q -dir /opt/sencha-cmd \

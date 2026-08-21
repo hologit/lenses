@@ -42,12 +42,18 @@ export GIT_DIR
 
 # --- 1. ingest the input bundle from stdin (fetch verifies all objects) ------
 INGEST_DIR=$(mktemp -d)
+# scratch dirs must not outlive the job — under the one-shot transport the
+# container is discarded anyway, but a warm-pool engine reuses this filesystem
+trap 'rm -rf "$INGEST_DIR" ${JOB_DIR:+"$JOB_DIR"}' EXIT
 BUNDLE_IN="$INGEST_DIR/input.bundle"
 cat > "$BUNDLE_IN"
 git fetch --quiet "$BUNDLE_IN" 'refs/jobs/*:refs/jobs/*' >&2
 
 # --- 2. locate the job --------------------------------------------------------
-INPUT_REF=$(git for-each-ref --format='%(refname)' 'refs/jobs/*/input' | head -n 1)
+# identify THIS job from the bundle's own heads — never by scanning the repo,
+# where refs/jobs/* from earlier jobs linger under a warm pool and a repo-wide
+# glob would select whichever sorts first
+INPUT_REF=$(git bundle list-heads "$BUNDLE_IN" | awk '$2 ~ /^refs\/jobs\/[^/]+\/input$/ { print $2; exit }')
 if [ -z "$INPUT_REF" ]; then
     log 'transport error: no refs/jobs/*/input ref found in bundle'
     exit 65

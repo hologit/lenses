@@ -15,7 +15,7 @@ LensRunner.run({ exportTree: true }, async (runner, inputTree) => {
         const type = (await runner.captureCommand('git', ['cat-file', '-t', `${inputTree}:${pkgPath}`])).trim();
         if (type !== 'tree') throw new Error('not a tree');
     } catch (e) {
-        throw new Error(`hololens.sencha.pkg '${senchaPkg}' does not match packages/${senchaPkg} under the workspace in the input tree`);
+        throw new Error(`hololens.sencha.pkg '${senchaPkg}' does not match ${pkgPath} in the input tree`);
     }
 
     const workTree = process.env.GIT_WORK_TREE;
