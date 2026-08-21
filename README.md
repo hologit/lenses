@@ -26,6 +26,25 @@ See [`_base-image/`](_base-image/) for the base image implementation.
 
 - **`_lens-lib`**: Core LensRunner class providing common operations like exporting trees, executing commands, and managing git operations
 - **`_lens-lib-k8s`**: Kubernetes-specific utilities for YAML processing and namespace management
+- **`_lens-sdk`**: The v2 job-protocol implementation shared by every image — dual-protocol entrypoint, one-shot job runner, and the transform bridge (see Job Protocols below)
+
+## Job Protocols
+
+Every image published from this repo serves **both** hologit lens transports from one entrypoint:
+
+- **v1 (legacy)**: the engine runs the container detached and talks to a git server on port 9000. Older hologit engines use this path unchanged.
+- **v2 (job protocol)**: the engine runs the container one-shot (`docker run --rm -i`) and pipes a git bundle through stdin/stdout. Failures are reported structurally — a parentless error commit carrying the transform's real exit code, log, and phase — instead of surfacing as opaque git transport errors. Images advertise support via the `sh.holo.lens.protocol=2` label; v2-capable engines (hologit >= 0.51) select it automatically.
+
+The dispatch tell is stdin: a v1 engine attaches `/dev/null`, a v2 engine attaches a pipe. See [`_lens-sdk/entrypoint.sh`](_lens-sdk/entrypoint.sh).
+
+**Lenses that build `FROM ghcr.io/hologit/lenses/base:node-20` inherit all of this** — no per-lens work. A lens with a custom base image (like the `sencha-*` family, which needs its own JDK/tooling stack) must add the four SDK lines its Dockerfile replicates from the base image:
+
+```dockerfile
+COPY _lens-sdk /hololens-sdk
+RUN chmod +x /hololens-sdk/entrypoint.sh /hololens-sdk/lens-job.sh /hololens-sdk/run-transform.js
+LABEL sh.holo.lens.protocol=2
+ENTRYPOINT ["/hololens-sdk/entrypoint.sh"]
+```
 
 ## Lens Patterns
 
@@ -203,6 +222,18 @@ Lens configuration follows these conventions:
 - **Debugging**: Check container logs and verify git tree contents with `git ls-tree`
 - **Dependencies**: Keep container images lean - only install what you need
 - **Caching**: Docker layer caching speeds up rebuilds, so order Dockerfile steps wisely
+
+## Publishing and Tags
+
+CI publishes images from three triggers:
+
+| Trigger | Tags published |
+| --- | --- |
+| Pull request | none — build-only verification |
+| Push to `develop` | `:v2` and `:v2-<shortsha>` soak tags (base image as `:node-20-v2`) |
+| GitHub release | `:latest` plus `:<major>`, `:<major>.<minor>`, `:<major>.<minor>.<patch>` |
+
+`develop` is the default branch — **target PRs at `develop`**, not `main`. Releases flow through the develop→main Release PR (`release-prepare`/`release-validate`/`release-publish`); merging the Release PR cuts the GitHub release that publishes `:latest`. Two footguns worth knowing: `release-validate` red-Xes every non-release PR by design (title-format check), and a stale open Release PR will be auto-closed *as merged* — publishing a release — if a push ever makes `develop` identical to `main`.
 
 ## Further Reading
 
