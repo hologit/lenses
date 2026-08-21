@@ -65,6 +65,13 @@ EXPOSE 9000
 ENV PORT=9000
 ENV GIT_DIR=/repo
 ENV GIT_WORK_TREE=/working
+
+# v2 lens job protocol with dual-protocol dispatch (see _base-image/Dockerfile)
+COPY _lens-sdk /hololens-sdk
+RUN chmod +x /hololens-sdk/entrypoint.sh /hololens-sdk/lens-job.sh /hololens-sdk/run-transform.js
+LABEL sh.holo.lens.protocol=2
+ENTRYPOINT ["/hololens-sdk/entrypoint.sh"]
+
 CMD ["node", "/lens-server/server.js"]
 ENV HOLOLENS_ENTRYPOINT=/lens/index.js
 WORKDIR /lens
