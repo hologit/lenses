@@ -53,7 +53,7 @@ git fetch --quiet "$BUNDLE_IN" 'refs/jobs/*:refs/jobs/*' >&2
 # identify THIS job from the bundle's own heads — never by scanning the repo,
 # where refs/jobs/* from earlier jobs linger under a warm pool and a repo-wide
 # glob would select whichever sorts first
-INPUT_REF=$(git bundle list-heads "$BUNDLE_IN" | awk '$2 ~ /^refs\/jobs\/[^/]+\/input$/ { print $2; exit }')
+INPUT_REF=$(git bundle list-heads "$BUNDLE_IN" | awk -v pat='^refs/jobs/[^/]+/input$' '$2 ~ pat { print $2; exit }')
 if [ -z "$INPUT_REF" ]; then
     log 'transport error: no refs/jobs/*/input ref found in bundle'
     exit 65
