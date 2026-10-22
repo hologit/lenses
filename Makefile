@@ -1,7 +1,7 @@
 # Mark all targets as .PHONY since we want them to run every time
-.PHONY: all _base-image compass k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run sencha-app sencha-pages shell tree-patch sencha-package
+.PHONY: all _base-image compass k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run sencha-app sencha-pages shell tree-patch sencha-package composer-install yarn-run
 
-all: _base-image compass k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run sencha-app sencha-pages shell tree-patch
+all: _base-image compass k8s-normalize k8s-patch helm3 kustomize mkdocs npm-install npm-run sencha-app sencha-pages shell tree-patch composer-install yarn-run
 
 _base-image:
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/base:node-20
@@ -43,4 +43,10 @@ tree-patch: _base-image
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
 
 sencha-package: _base-image
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
+
+composer-install: _base-image
+	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
+
+yarn-run: _base-image
 	docker build . -f $@/Dockerfile -t ghcr.io/hologit/lenses/$@:latest
